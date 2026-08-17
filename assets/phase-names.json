@@ -1,0 +1,10 @@
+{
+  "0": { "vi": "Chuẩn chung", "en": "Standards" },
+  "1": { "vi": "Khảo sát", "en": "Problem survey" },
+  "2": { "vi": "Đặc tả", "en": "Requirements" },
+  "3": { "vi": "Phân tích", "en": "Analysis" },
+  "4": { "vi": "Thiết kế", "en": "Design" },
+  "5": { "vi": "Xây dựng", "en": "Build" },
+  "6": { "vi": "Kiểm thử", "en": "Testing" },
+  "7": { "vi": "Hướng dẫn", "en": "Usage" }
+}

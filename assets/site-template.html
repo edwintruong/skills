@@ -1,0 +1,1819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__TITLE__</title>
+<style>
+  :root {
+    --paper: #f7f8f6;
+    --paper-raised: #ffffff;
+    --ink: #14181c;
+    --ink-soft: #4a5560;
+    --ink-faint: #8b94a0;
+    --line: #e2e6e4;
+    --line-soft: #edefec;
+    --accent: #2b5c6b;
+    --accent-soft: #e6eef0;
+    --accent-ink: #1c3d47;
+    --amber: #a66b22;
+    --amber-soft: #f5ead9;
+    --green: #2f7d5b;
+    --green-soft: #e3f0e9;
+    --red: #b23b3b;
+    --red-soft: #f6e5e5;
+    --display: ui-serif, Georgia, "Times New Roman", serif;
+    --sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --rail-w: 286px;
+    --toc-w: 214px;
+    --text-w: 780px;
+    --wide-max: 1180px;
+    --bar-h: 54px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  html, body { max-width: 100%; }
+  /* `clip` rather than `hidden`: it kills the stray horizontal scrollbar without
+     turning <body> into a scroll container, which would break position: sticky. */
+  body {
+    margin: 0;
+    overflow-x: clip;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15.5px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  button { font-family: inherit; cursor: pointer; }
+  ::selection { background: var(--accent-soft); }
+
+  /* ---------- Top bar ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 40;
+    display: flex; align-items: center; gap: 12px;
+    height: var(--bar-h); padding: 0 16px;
+    background: var(--paper-raised);
+    border-bottom: 1px solid var(--line);
+  }
+  .brand {
+    display: flex; align-items: baseline; gap: 8px;
+    font-family: var(--display); font-weight: 600; font-size: 17px;
+    color: var(--ink); white-space: nowrap;
+    max-width: 34vw; overflow: hidden; text-overflow: ellipsis;
+  }
+  .brand .mark {
+    font-family: var(--mono); font-size: 11px; font-weight: 600;
+    color: var(--accent); background: var(--accent-soft);
+    border-radius: 4px; padding: 2px 6px; letter-spacing: 0.02em;
+  }
+  .search-wrap { position: relative; flex: 1 1 220px; max-width: 340px; min-width: 0; }
+  .search-wrap input {
+    width: 100%; font: inherit; font-size: 13.5px;
+    padding: 7px 12px 7px 30px;
+    border: 1px solid var(--line); border-radius: 7px;
+    background: var(--paper); color: var(--ink);
+  }
+  .search-wrap input:focus { outline: none; border-color: var(--accent); background: var(--paper-raised); }
+  .search-wrap svg { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); opacity: 0.45; }
+  .search-kbd {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    font-family: var(--mono); font-size: 10px; color: var(--ink-faint);
+    border: 1px solid var(--line); border-radius: 4px; padding: 1px 4px; pointer-events: none;
+  }
+  .topbar-spacer { flex: 1 1 auto; min-width: 0; }
+  .icon-btn {
+    display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+    border: 1px solid var(--line); background: var(--paper-raised);
+    color: var(--ink-soft); border-radius: 7px; padding: 6px 10px;
+    font-size: 12.5px; font-weight: 500;
+  }
+  .icon-btn:hover { border-color: var(--accent); color: var(--accent-ink); }
+  .icon-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .icon-btn.primary:hover { background: var(--accent-ink); color: #fff; }
+  .icon-btn.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); }
+  .icon-btn[hidden] { display: none; }
+  .rail-toggle { display: none; }
+  .dirty-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--amber); }
+
+  /* ---------- Shell ---------- */
+  .shell { display: flex; align-items: flex-start; min-height: calc(100vh - var(--bar-h)); }
+
+  /* ---------- Rail (left nav) ---------- */
+  .rail {
+    position: sticky; top: var(--bar-h); z-index: 30;
+    width: var(--rail-w); flex: 0 0 var(--rail-w); min-width: 0;
+    border-right: 1px solid var(--line);
+    background: var(--paper-raised);
+    height: calc(100vh - var(--bar-h));
+    display: flex; flex-direction: column;
+  }
+  .rail-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 12px 14px 8px; flex: 0 0 auto;
+  }
+  .rail-head .label {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.09em;
+    text-transform: uppercase; color: var(--ink-faint);
+  }
+  .rail-head button {
+    background: none; border: 0; color: var(--ink-faint); font-size: 11.5px; padding: 2px 4px; border-radius: 4px;
+  }
+  .rail-head button:hover { color: var(--accent-ink); background: var(--line-soft); }
+  .rail-scroll { flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; padding: 0 10px 32px; }
+  .rail-resizer {
+    position: absolute; top: 0; right: -3px; width: 7px; height: 100%;
+    cursor: col-resize; z-index: 31;
+  }
+  .rail-resizer::after {
+    content: ""; position: absolute; left: 3px; top: 0; width: 1px; height: 100%; background: transparent;
+  }
+  .rail-resizer:hover::after, .rail-resizer.dragging::after { background: var(--accent); }
+
+  .phase-group { margin-bottom: 2px; }
+  .phase-head {
+    display: grid; grid-template-columns: 24px minmax(0, 1fr) auto 12px;
+    align-items: center; gap: 9px;
+    width: 100%; background: none; border: 0;
+    padding: 7px 8px; border-radius: 7px;
+    text-align: left; color: var(--ink);
+  }
+  .phase-head:hover { background: var(--line-soft); }
+  .phase-num {
+    font-family: var(--mono); font-weight: 600; font-size: 11px;
+    color: var(--accent); background: var(--accent-soft);
+    border-radius: 5px; padding: 3px 0; text-align: center;
+  }
+  .phase-label { min-width: 0; }
+  .phase-vi {
+    font-size: 12.5px; font-weight: 600; color: var(--ink); display: block;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .phase-en {
+    font-size: 9.5px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.06em;
+    display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .phase-count { font-family: var(--mono); font-size: 10px; color: var(--ink-faint); }
+  .phase-chevron { color: var(--ink-faint); transition: transform 0.15s; }
+  .phase-group.collapsed .phase-chevron { transform: rotate(-90deg); }
+  .phase-docs {
+    margin: 1px 0 6px 19px; padding-left: 6px;
+    border-left: 1px solid var(--line-soft);
+  }
+  .phase-group.collapsed .phase-docs { display: none; }
+
+  .doc-link {
+    display: grid; grid-template-columns: 7px 48px minmax(0, 1fr);
+    align-items: start; gap: 8px;
+    padding: 6px 9px; margin: 1px 0; border-radius: 6px;
+    font-size: 12.5px; line-height: 1.4; color: var(--ink-soft);
+  }
+  .doc-link:hover { background: var(--line-soft); text-decoration: none; color: var(--ink); }
+  .doc-link.active {
+    background: var(--accent-soft); color: var(--accent-ink); font-weight: 500;
+    box-shadow: inset 2px 0 0 var(--accent);
+  }
+  .doc-link .status-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 5px; }
+  /* The id column is fixed so ids line up down the rail; a long id
+     ("2026-08-15", "ADR 0001") shrinks to stay on one line rather than
+     wrapping and pushing its title out of alignment. */
+  .doc-id {
+    font-family: var(--mono); font-size: 10.5px; color: var(--ink-faint);
+    padding-top: 1px; white-space: nowrap; overflow: hidden;
+  }
+  .doc-id.long { font-size: 8.5px; letter-spacing: -0.01em; padding-top: 2.5px; }
+  .doc-link.active .doc-id { color: var(--accent); }
+  .doc-title {
+    min-width: 0; overflow: hidden;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow-wrap: anywhere;
+  }
+  .doc-link .body-hit {
+    font-family: var(--mono); font-size: 9px; color: var(--accent);
+    background: var(--accent-soft); border-radius: 3px; padding: 0 3px; margin-left: 5px;
+  }
+  .doc-link .doc-dirty { color: var(--amber); font-size: 14px; line-height: 1; margin-left: 4px; }
+  .status-dot.draft { background: var(--ink-faint); }
+  .status-dot.review { background: var(--amber); }
+  .status-dot.approved { background: var(--green); }
+  .status-dot.deprecated { background: var(--red); }
+  .rail-empty { padding: 14px 10px; font-size: 12.5px; color: var(--ink-faint); }
+
+  /* ---------- Content column ---------- */
+  .content-col { flex: 1 1 auto; min-width: 0; }
+  .split { display: flex; justify-content: center; width: 100%; min-width: 0; }
+  .edit-pane { display: none; min-width: 0; }
+
+  main.doc {
+    width: 100%; max-width: var(--wide-max); min-width: 0;
+    margin: 0 auto;
+    padding: 38px 30px 96px;
+    /* Body text keeps a readable measure; diagrams and very wide tables are
+       allowed to break out into the `wide` track instead of being shrunk. */
+    display: grid;
+    grid-template-columns:
+      [wide-start] minmax(0, 1fr)
+      [text-start] minmax(0, var(--text-w))
+      [text-end] minmax(0, 1fr)
+      [wide-end];
+  }
+  main.doc > * { grid-column: text; min-width: 0; }
+  main.doc > .diagram-frame, main.doc > .table-wrap.wide { grid-column: wide; }
+
+  .crumb { font-size: 12px; color: var(--ink-faint); margin-bottom: 12px; }
+  .crumb .sep { margin: 0 6px; }
+  .doc-meta-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap; }
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: var(--mono); font-size: 11px; font-weight: 500;
+    padding: 3px 9px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .status-pill.draft { background: var(--line-soft); color: var(--ink-soft); }
+  .status-pill.review { background: var(--amber-soft); color: var(--amber); }
+  .status-pill.approved { background: var(--green-soft); color: var(--green); }
+  .status-pill.deprecated { background: var(--red-soft); color: var(--red); }
+  .doc-meta-row .sep-dot { color: var(--ink-faint); }
+  .doc-meta-row .meta-item { font-size: 12px; color: var(--ink-faint); }
+
+  main.doc h1 {
+    font-family: var(--display); font-weight: 600; font-size: 33px;
+    line-height: 1.18; letter-spacing: -0.01em; margin: 4px 0 22px;
+    overflow-wrap: anywhere;
+  }
+  main.doc h2 {
+    font-family: var(--sans); font-weight: 600; font-size: 19px;
+    margin: 40px 0 13px; padding-bottom: 7px; border-bottom: 1px solid var(--line);
+    scroll-margin-top: 70px; overflow-wrap: anywhere;
+  }
+  main.doc h3 {
+    font-family: var(--sans); font-weight: 600; font-size: 15.5px;
+    margin: 26px 0 9px; scroll-margin-top: 70px; overflow-wrap: anywhere;
+  }
+  main.doc p { margin: 0 0 14px; color: var(--ink); overflow-wrap: break-word; }
+  main.doc ul, main.doc ol { margin: 0 0 14px; padding-left: 22px; overflow-wrap: break-word; }
+  main.doc li { margin: 3px 0; }
+  main.doc hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+  main.doc strong { font-weight: 600; }
+  main.doc code {
+    font-family: var(--mono); font-size: 0.86em;
+    background: var(--line-soft); border: 1px solid var(--line);
+    border-radius: 4px; padding: 0.1em 0.4em;
+    overflow-wrap: anywhere;
+  }
+  main.doc pre {
+    background: #10161b; color: #dde4e8;
+    border-radius: 8px; padding: 15px 17px;
+    max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain;
+    margin: 0 0 16px; line-height: 1.55;
+  }
+  main.doc pre code { background: none; border: 0; padding: 0; font-size: 12.5px; color: inherit; overflow-wrap: normal; white-space: pre; }
+  main.doc blockquote {
+    margin: 0 0 16px; padding: 10px 16px;
+    border-left: 3px solid var(--accent); background: var(--accent-soft);
+    color: var(--accent-ink); border-radius: 0 6px 6px 0;
+  }
+  main.doc blockquote p:last-child { margin-bottom: 0; }
+
+  /* Tables live inside their own scroller so a wide one never pushes the page. */
+  .table-wrap { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; margin: 0 0 18px; }
+  .table-wrap table { margin-bottom: 0; }
+  main.doc table { border-collapse: collapse; width: 100%; margin: 0 0 18px; font-size: 13.5px; }
+  main.doc th, main.doc td { border-bottom: 1px solid var(--line); padding: 7px 11px; text-align: left; vertical-align: top; }
+  main.doc thead th { border-bottom: 1px solid var(--ink-faint); font-weight: 600; font-size: 12px; color: var(--ink-soft); white-space: nowrap; }
+  main.doc tbody tr:hover { background: var(--paper); }
+  main.doc table.meta { max-width: 480px; font-size: 13px; }
+  main.doc table.meta td:first-child { width: 150px; color: var(--ink-soft); }
+  main.doc a code { color: var(--accent); }
+  /* A link to a .md file that is not part of this build — usually a document
+     the set plans but has not written. Visible, not hidden and not rewritten. */
+  main.doc a.dead-link { color: var(--ink-faint); text-decoration: underline dotted; cursor: help; }
+  main.doc code.spec-id { color: var(--accent-ink); background: var(--accent-soft); border-color: transparent; font-weight: 500; }
+  main.doc img { max-width: 100%; height: auto; }
+
+  /* ---------- Diagrams ---------- */
+  .diagram-frame {
+    margin: 4px auto 10px; width: 100%;
+    border: 1px solid var(--line); border-radius: 10px;
+    background: var(--paper-raised); overflow: hidden;
+  }
+  .diagram-canvas {
+    padding: 18px; position: relative;
+    display: flex; align-items: center; justify-content: center;
+    max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain;
+    background:
+      linear-gradient(90deg, rgba(0,0,0,0.025) 1px, transparent 1px) 0 0/16px 16px,
+      linear-gradient(rgba(0,0,0,0.025) 1px, transparent 1px) 0 0/16px 16px,
+      var(--paper-raised);
+  }
+  .diagram-canvas .diagram-inner { display: block; max-width: 100%; }
+  .diagram-frame[data-fit="actual"] .diagram-canvas { justify-content: flex-start; }
+  .diagram-frame[data-fit="actual"] .diagram-canvas .diagram-inner { max-width: none; }
+  .diagram-canvas img { display: block; height: auto; }
+  .diagram-canvas svg { display: block; height: auto; }
+  .diagram-toolbar {
+    position: absolute; top: 9px; right: 9px; z-index: 2;
+    display: flex; gap: 5px; opacity: 0; transition: opacity 0.12s;
+  }
+  .diagram-frame:hover .diagram-toolbar, .diagram-toolbar:focus-within { opacity: 1; }
+  .diagram-toolbar button {
+    background: rgba(20,24,28,0.74); color: #fff; border: 0; border-radius: 5px;
+    height: 24px; min-width: 24px; padding: 0 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.02em;
+  }
+  .diagram-toolbar button:hover { background: rgba(20,24,28,0.95); }
+  .diagram-toolbar button.on { background: var(--accent); }
+  .diagram-source-tag {
+    position: absolute; top: 9px; left: 9px; z-index: 2;
+    font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.05em; text-transform: uppercase;
+    background: rgba(20,24,28,0.6); color: #fff; padding: 3px 7px; border-radius: 5px;
+    opacity: 0; transition: opacity 0.12s;
+  }
+  .diagram-frame:hover .diagram-source-tag { opacity: 1; }
+  figcaption.diagram-caption {
+    padding: 11px 16px; font-size: 13px; color: var(--ink-soft);
+    border-top: 1px solid var(--line); background: var(--paper);
+  }
+  figcaption.diagram-caption::before {
+    content: "Caption"; display: block; font-family: var(--mono); font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); margin-bottom: 3px;
+  }
+  .diagram-error {
+    padding: 16px 18px; font-family: var(--mono); font-size: 12px;
+    color: var(--red); background: var(--red-soft); white-space: pre-wrap; overflow-wrap: anywhere;
+  }
+  .diagram-error b { display: block; margin-bottom: 6px; font-family: var(--sans); }
+  /* A fence you are halfway through typing does not parse, and it does not
+     parse on most keystrokes. Keep the last drawing that worked, dimmed and
+     labelled, instead of flashing a red box between every character. */
+  .diagram-frame[data-parse="stale"] .diagram-inner,
+  .diagram-frame[data-parse="typing"] .diagram-inner { opacity: 0.4; filter: grayscale(0.35); }
+  .diagram-frame[data-parse="stale"] .diagram-canvas::after,
+  .diagram-frame[data-parse="typing"] .diagram-canvas::after {
+    content: "đang cập nhật…"; position: absolute; bottom: 9px; left: 9px; z-index: 2;
+    font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.05em;
+    background: rgba(20,24,28,0.6); color: #fff; padding: 3px 7px; border-radius: 5px;
+  }
+  .diagram-frame[data-parse="typing"] .diagram-canvas::after { content: "chưa phân tích được — đang gõ"; }
+
+  /* lightbox */
+  .lightbox { position: fixed; inset: 0; z-index: 100; display: none; background: rgba(16,20,24,0.93); align-items: center; justify-content: center; flex-direction: column; }
+  .lightbox.open { display: flex; }
+  .lightbox-stage { flex: 1; width: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: grab; padding: 20px; }
+  .lightbox-stage.grabbing { cursor: grabbing; }
+  .lightbox-stage img, .lightbox-stage svg { max-width: none; transform-origin: center center; transition: transform 0.06s linear; user-select: none; }
+  .lightbox-bar { display: flex; align-items: center; gap: 10px; padding: 12px 18px; color: #cfd6db; font-size: 12.5px; flex-wrap: wrap; }
+  .lightbox-bar button { background: rgba(255,255,255,0.1); color: #fff; border: 0; border-radius: 6px; padding: 6px 10px; font-size: 12px; display: flex; align-items: center; gap: 5px; }
+  .lightbox-bar button:hover { background: rgba(255,255,255,0.2); }
+  .lightbox-caption { flex: 1 1 200px; color: #98a2ab; min-width: 0; }
+  .lightbox-close { position: absolute; top: 14px; right: 20px; color: #fff; background: none; border: 0; font-size: 26px; line-height: 1; opacity: 0.8; }
+  .lightbox-close:hover { opacity: 1; }
+
+  /* ---------- TOC ---------- */
+  .toc-col {
+    width: var(--toc-w); flex: 0 0 var(--toc-w); min-width: 0;
+    position: sticky; top: var(--bar-h); height: calc(100vh - var(--bar-h));
+    overflow-y: auto; overflow-x: hidden; padding: 38px 16px 40px 4px;
+  }
+  .toc-label { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-faint); margin-bottom: 10px; }
+  .toc-col a {
+    display: block; font-size: 12.5px; color: var(--ink-soft);
+    padding: 3px 0 3px 10px; border-left: 2px solid var(--line-soft);
+    overflow-wrap: anywhere;
+  }
+  .toc-col a.lvl3 { padding-left: 20px; color: var(--ink-faint); font-size: 12px; }
+  .toc-col a:hover, .toc-col a.active { color: var(--accent-ink); border-left-color: var(--accent); text-decoration: none; }
+
+  /* ---------- Editor ---------- */
+  .shell.editing .toc-col { display: none; }
+  .shell.editing .split {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    height: calc(100vh - var(--bar-h));
+  }
+  .shell.editing .edit-pane { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--line); background: var(--paper-raised); }
+  /* The preview is half a screen wide, so the reading measure and the `wide`
+     break-out track have nothing left to break out of: a 780px text column
+     inside a 600px pane squeezes every table and diagram into a horizontal
+     scroller. Collapse the column to the pane and let header cells wrap — the
+     nowrap header alone is enough to make a six-column table unreadable here. */
+  .shell.editing main.doc {
+    --text-w: 100%; max-width: none;
+    overflow-y: auto; height: 100%; padding: 24px 22px 80px;
+  }
+  .shell.editing main.doc thead th { white-space: normal; }
+  .shell.editing main.doc table { font-size: 12.5px; }
+  .shell.editing main.doc th, .shell.editing main.doc td { padding: 6px 8px; }
+  .edit-bar {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    padding: 9px 12px; border-bottom: 1px solid var(--line); background: var(--paper);
+    flex: 0 0 auto;
+  }
+  .edit-path { font-family: var(--mono); font-size: 11.5px; color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1 1 auto; }
+  .edit-target { font-size: 11px; color: var(--ink-faint); }
+  .edit-bar button { font-size: 12px; padding: 5px 9px; }
+  #editArea {
+    flex: 1 1 auto; width: 100%; min-height: 0; resize: none;
+    border: 0; outline: none; padding: 16px 18px;
+    font-family: var(--mono); font-size: 13px; line-height: 1.7;
+    color: var(--ink); background: var(--paper-raised);
+    tab-size: 2;
+  }
+  .draft-banner {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    margin: 0 0 18px; padding: 9px 13px; border-radius: 8px;
+    background: var(--amber-soft); color: var(--amber);
+    font-size: 12.5px; border: 1px solid rgba(166,107,34,0.25);
+  }
+  .draft-banner button { border: 1px solid rgba(166,107,34,0.4); background: transparent; color: var(--amber); border-radius: 6px; padding: 3px 8px; font-size: 11.5px; }
+  .draft-banner button:hover { background: rgba(166,107,34,0.12); }
+
+  .toast {
+    position: fixed; right: 18px; bottom: 18px; z-index: 120;
+    background: var(--ink); color: #fff; border-radius: 8px;
+    padding: 10px 14px; font-size: 12.5px; max-width: 380px;
+    opacity: 0; transform: translateY(8px); pointer-events: none;
+    transition: opacity 0.18s, transform 0.18s;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.err { background: var(--red); }
+
+  /* The overview page is pinned above the phase groups: it is the one document
+     every reader opens, and filing it inside a phase hides it in a collapsed
+     group. */
+  .home-link {
+    display: grid; grid-template-columns: 15px minmax(0, 1fr);
+    align-items: center; gap: 9px;
+    padding: 8px 9px; margin: 2px 0 10px; border-radius: 7px;
+    font-size: 12.5px; font-weight: 500; color: var(--ink-soft);
+  }
+  .home-link:hover { background: var(--line-soft); text-decoration: none; color: var(--ink); }
+  .home-link.active {
+    background: var(--accent-soft); color: var(--accent-ink);
+    box-shadow: inset 2px 0 0 var(--accent);
+  }
+  .home-link svg { color: var(--ink-faint); }
+  .home-link.active svg { color: var(--accent); }
+  .home-link .doc-title { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* ---------- Home / landing ---------- */
+  .home-hero { margin-bottom: 30px; }
+  .home-hero .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+  .home-hero h1 { margin-bottom: 10px; }
+  .home-hero p.lede { font-size: 16px; color: var(--ink-soft); max-width: 58ch; }
+  .phase-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; margin: 26px 0 8px; }
+  .phase-card { border: 1px solid var(--line); border-radius: 10px; padding: 16px; background: var(--paper-raised); display: block; color: var(--ink); }
+  .phase-card:hover { border-color: var(--accent); text-decoration: none; }
+  .phase-card .card-num { font-family: var(--mono); font-size: 22px; font-weight: 600; color: var(--accent); display: block; margin-bottom: 6px; }
+  .phase-card .card-vi { display: block; font-weight: 600; font-size: 14px; }
+  .phase-card .card-en { font-size: 11px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.04em; }
+  .phase-card .doc-count { font-size: 11.5px; color: var(--ink-faint); margin-top: 6px; }
+  .phase-nav { margin-top: 44px; border-top: 1px solid var(--line); padding-top: 8px; }
+  .phase-nav .nav-label {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--ink-faint);
+  }
+  .phase-nav .phase-cards { margin-top: 14px; }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 1180px) { .toc-col { display: none; } }
+  @media (max-width: 1040px) {
+    .shell.editing .split { grid-template-columns: minmax(0, 1fr); }
+    .shell.editing main.doc { display: none; }
+  }
+  @media (max-width: 820px) {
+    :root { --rail-w: 84vw; }
+    .rail-toggle { display: inline-flex; }
+    .rail { position: fixed; left: 0; top: var(--bar-h); transform: translateX(-100%); transition: transform 0.18s; box-shadow: 8px 0 24px rgba(0,0,0,0.14); }
+    .rail.open { transform: translateX(0); }
+    .rail-resizer { display: none; }
+    .brand .mark { display: none; }
+    .search-kbd { display: none; }
+    main.doc { padding: 26px 16px 80px; }
+    main.doc h1 { font-size: 26px; }
+    .diagram-canvas { padding: 12px; }
+  }
+
+  @media print {
+    .topbar, .rail, .toc-col, .edit-pane, .diagram-toolbar, .diagram-source-tag, .draft-banner, .toast { display: none !important; }
+    .shell, .split { display: block; }
+    main.doc { max-width: none; padding: 0; display: block; }
+    .diagram-frame { break-inside: avoid; }
+    a { color: var(--ink); }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="icon-btn rail-toggle" id="railToggle" aria-label="Toggle navigation">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="brand"><span id="siteTitle">__TITLE__</span> <span class="mark">DOCS</span></div>
+  <div class="search-wrap">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input id="searchBox" type="text" placeholder="Search title or text…" autocomplete="off">
+    <span class="search-kbd">⌘K</span>
+  </div>
+  <div class="topbar-spacer"></div>
+  <button class="icon-btn" id="saveBtn" hidden title="Save to the .md file (Ctrl/Cmd+S)">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+    Save
+  </button>
+  <button class="icon-btn" id="editBtn" title="Edit this document (Ctrl/Cmd+E)">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    Edit
+  </button>
+  <button class="icon-btn" id="printBtn" title="Print / save as PDF">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+    Print
+  </button>
+</div>
+
+<div class="shell" id="shell">
+  <nav class="rail" id="rail">
+    <div class="rail-head">
+      <span class="label">Contents</span>
+      <button id="toggleAll" title="Expand or collapse every phase">Collapse all</button>
+    </div>
+    <div class="rail-scroll" id="railScroll"></div>
+    <div class="rail-resizer" id="railResizer" title="Drag to resize"></div>
+  </nav>
+  <div class="content-col">
+    <div class="split" id="split">
+      <section class="edit-pane" id="editPane">
+        <div class="edit-bar">
+          <span class="edit-path" id="editPath"></span>
+          <span class="edit-target" id="editTarget"></span>
+          <button class="icon-btn" id="revertBtn" title="Discard local changes">Revert</button>
+          <button class="icon-btn" id="copyBtn" title="Copy the Markdown to the clipboard">Copy</button>
+          <button class="icon-btn primary" id="saveBtn2">Save .md</button>
+        </div>
+        <textarea id="editArea" spellcheck="false" wrap="soft"></textarea>
+      </section>
+      <main class="doc" id="doc"><p style="color:#8b94a0">Loading…</p></main>
+    </div>
+  </div>
+  <aside class="toc-col" id="tocCol"></aside>
+</div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" id="lightboxClose">&times;</button>
+  <div class="lightbox-stage" id="lightboxStage"></div>
+  <div class="lightbox-bar">
+    <button id="lbZoomOut">&minus;</button>
+    <button id="lbZoomFit">Fit</button>
+    <button id="lbZoomReset">100%</button>
+    <button id="lbZoomIn">+</button>
+    <span class="lightbox-caption" id="lightboxCaption"></span>
+    <button id="lbDownload">Download SVG</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="application/json" id="manifest-data">__MANIFEST__</script>
+<script type="application/json" id="phases-data">__PHASES__</script>
+<script type="application/json" id="images-data">__IMAGES__</script>
+<script type="application/json" id="config-data">__CONFIG__</script>
+__DOC_SCRIPTS__
+__VENDOR__
+<script>
+"use strict";
+
+const MANIFEST = JSON.parse(document.getElementById('manifest-data').textContent);
+const PHASES   = JSON.parse(document.getElementById('phases-data').textContent);
+const IMAGES   = JSON.parse(document.getElementById('images-data').textContent);
+const CONFIG   = JSON.parse(document.getElementById('config-data').textContent);
+
+const railEl   = document.getElementById('rail');
+const railList = document.getElementById('railScroll');
+const shellEl  = document.getElementById('shell');
+const docEl    = document.getElementById('doc');
+const tocEl    = document.getElementById('tocCol');
+const editArea = document.getElementById('editArea');
+const toastEl  = document.getElementById('toast');
+
+const SITE_KEY = 'sd:' + (CONFIG.site_key || 'docs');
+const SOURCES  = MANIFEST.map((_, i) => document.getElementById('doc-' + i).textContent);
+const HOME_IDX = MANIFEST.findIndex(d => d.home);
+
+/* Relative links between documents ("4.4-api-contract.md#errors") are the whole
+   point of the overview page, and in a single-file build there is no file next
+   to the page to open. Map every document path — full, and by basename where
+   that is unambiguous — to its in-page slug, and rewrite the links at render
+   time. The Markdown on disk keeps the path it was written with. */
+const LINK_MAP = (function () {
+  const byPath = {}, seen = {};
+  MANIFEST.forEach(d => {
+    const rel = (d.rel_path || '').replace(/^\.\//, '');
+    if (rel) byPath[rel] = d.slug;
+    const base = rel.split('/').pop();
+    seen[base] = (seen[base] || 0) + 1;
+  });
+  MANIFEST.forEach(d => {
+    const base = (d.rel_path || '').split('/').pop();
+    if (base && seen[base] === 1 && !(base in byPath)) byPath[base] = d.slug;
+  });
+  return byPath;
+})();
+
+/* Resolve "../ops/runbook.md" against the document that links to it. */
+function resolveRelPath(fromRel, href) {
+  const stack = (fromRel || '').split('/').slice(0, -1);
+  href.split('/').forEach(part => {
+    if (part === '' || part === '.') return;
+    if (part === '..') stack.pop();
+    else stack.push(part);
+  });
+  return stack.join('/');
+}
+
+let currentIdx = -1;
+let editing = false;
+
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'base',
+  securityLevel: 'loose',
+  themeVariables: {
+    primaryColor: '#eef2f0', primaryTextColor: '#14181c', primaryBorderColor: '#9aa5a2',
+    lineColor: '#7b8794', secondaryColor: '#e6eef0', tertiaryColor: '#ffffff',
+    fontFamily: 'IBM Plex Sans, ui-sans-serif, system-ui, sans-serif', fontSize: '14px'
+  },
+  /* useMaxWidth:false makes mermaid emit an intrinsic-size SVG with a viewBox.
+     We then drive the on-page size ourselves in fitDiagram() — otherwise every
+     diagram renders at whatever width mermaid guessed and small ones look tiny. */
+  flowchart:     { useMaxWidth: false, htmlLabels: true, curve: 'basis', nodeSpacing: 45, rankSpacing: 55 },
+  sequence:      { useMaxWidth: false, actorMargin: 55, width: 160, height: 46, boxMargin: 10 },
+  state:         { useMaxWidth: false },
+  class:         { useMaxWidth: false },
+  er:            { useMaxWidth: false },
+  journey:       { useMaxWidth: false },
+  gantt:         { useMaxWidth: false },
+  pie:           { useMaxWidth: false },
+  mindmap:       { useMaxWidth: false },
+  timeline:      { useMaxWidth: false }
+});
+
+/* ------------------------------------------------------------------ utils */
+function debounce(fn, ms) {
+  let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
+}
+function toast(msg, isError) {
+  toastEl.textContent = msg;
+  toastEl.classList.toggle('err', !!isError);
+  toastEl.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => toastEl.classList.remove('show'), isError ? 6000 : 3200);
+}
+function statusClass(status) {
+  const s = (status || '').toLowerCase();
+  if (s.includes('approve')) return 'approved';
+  if (s.includes('review')) return 'review';
+  if (s.includes('deprecat')) return 'deprecated';
+  return 'draft';
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ----------------------------------------------------------- draft storage */
+/* A draft is an unsaved edit living in localStorage. It never replaces the
+   Markdown file — Save does that — but it survives a page reload so a long
+   editing session is not one accidental refresh away from being lost. */
+function draftKey(slug) { return SITE_KEY + ':draft:' + slug; }
+function getDraft(slug) { try { return localStorage.getItem(draftKey(slug)); } catch (e) { return null; } }
+function setDraft(slug, text) { try { localStorage.setItem(draftKey(slug), text); } catch (e) {} }
+function clearDraft(slug) { try { localStorage.removeItem(draftKey(slug)); } catch (e) {} }
+function sourceOf(idx) {
+  const d = getDraft(MANIFEST[idx].slug);
+  return d !== null ? d : SOURCES[idx];
+}
+function isDirty(idx) {
+  const d = getDraft(MANIFEST[idx].slug);
+  return d !== null && d !== SOURCES[idx];
+}
+function anyDirty() { return MANIFEST.some((_, i) => isDirty(i)); }
+
+/* -------------------------------------------------------------------- rail */
+function groupByPhase() {
+  const groups = {};
+  MANIFEST.forEach((d, i) => {
+    if (d.home) return;  // pinned above the groups, not filed inside one
+    (groups[d.phase] = groups[d.phase] || []).push({ ...d, idx: i });
+  });
+  return groups;
+}
+function phaseKeysSorted(groups) {
+  return Object.keys(groups).sort((a, b) => {
+    const na = parseFloat(a), nb = parseFloat(b);
+    if (isNaN(na) && isNaN(nb)) return a.localeCompare(b);
+    if (isNaN(na)) return 1;
+    if (isNaN(nb)) return -1;
+    return na - nb;
+  });
+}
+function collapsedSet() {
+  try { return new Set(JSON.parse(localStorage.getItem(SITE_KEY + ':collapsed') || '[]')); }
+  catch (e) { return new Set(); }
+}
+function saveCollapsed(set) {
+  try { localStorage.setItem(SITE_KEY + ':collapsed', JSON.stringify([...set])); } catch (e) {}
+}
+
+function buildRail() {
+  const groups = groupByPhase();
+  const collapsed = collapsedSet();
+  railList.innerHTML = '';
+
+  if (HOME_IDX >= 0) {
+    const home = document.createElement('a');
+    home.className = 'home-link';
+    home.href = '#';
+    home.dataset.idx = HOME_IDX;
+    home.title = MANIFEST[HOME_IDX].title;
+    home.innerHTML =
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+      '<path d="M4 5h16M4 12h16M4 19h10"/></svg>' +
+      '<span class="doc-title">' + escapeHtml(MANIFEST[HOME_IDX].title) + '</span>';
+    railList.appendChild(home);
+  }
+
+  phaseKeysSorted(groups).forEach(pk => {
+    const meta = PHASES[pk] || { vi: 'Khác', en: 'Other' };
+    const docs = groups[pk].sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
+
+    const group = document.createElement('div');
+    group.className = 'phase-group' + (collapsed.has(pk) ? ' collapsed' : '');
+    group.dataset.phase = pk;
+
+    const head = document.createElement('button');
+    head.className = 'phase-head';
+    head.innerHTML =
+      '<span class="phase-num">' + escapeHtml(pk) + '</span>' +
+      '<span class="phase-label">' +
+        '<span class="phase-vi">' + escapeHtml(meta.vi) + '</span>' +
+        '<span class="phase-en">' + escapeHtml(meta.en) + '</span>' +
+      '</span>' +
+      '<span class="phase-count">' + docs.length + '</span>' +
+      '<svg class="phase-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>';
+    head.addEventListener('click', () => {
+      group.classList.toggle('collapsed');
+      const set = collapsedSet();
+      group.classList.contains('collapsed') ? set.add(pk) : set.delete(pk);
+      saveCollapsed(set);
+    });
+
+    const docsWrap = document.createElement('div');
+    docsWrap.className = 'phase-docs';
+    docs.forEach(d => {
+      const a = document.createElement('a');
+      a.className = 'doc-link';
+      a.href = '#' + d.slug;
+      a.dataset.slug = d.slug;
+      a.dataset.idx = d.idx;
+      a.dataset.search = (d.title + ' ' + d.id).toLowerCase();
+      a.title = d.title;
+      a.innerHTML =
+        '<span class="status-dot ' + statusClass(d.status) + '"></span>' +
+        '<span class="doc-id' + (d.id.length > 6 ? ' long' : '') + '">' + escapeHtml(d.id) + '</span>' +
+        '<span class="doc-title">' + escapeHtml(d.title) + '</span>';
+      docsWrap.appendChild(a);
+    });
+
+    group.appendChild(head);
+    group.appendChild(docsWrap);
+    railList.appendChild(group);
+  });
+  markDirtyInRail();
+}
+
+function markDirtyInRail() {
+  railList.querySelectorAll('.doc-link, .home-link').forEach(a => {
+    const idx = +a.dataset.idx;
+    const title = a.querySelector('.doc-title');
+    const existing = title.querySelector('.doc-dirty');
+    if (isDirty(idx)) {
+      if (!existing) {
+        const dot = document.createElement('span');
+        dot.className = 'doc-dirty';
+        dot.textContent = '•';
+        dot.title = 'Unsaved local edits';
+        title.appendChild(dot);
+      }
+    } else if (existing) {
+      existing.remove();
+    }
+  });
+}
+
+document.getElementById('toggleAll').addEventListener('click', e => {
+  const groups = [...railList.querySelectorAll('.phase-group')];
+  const anyOpen = groups.some(g => !g.classList.contains('collapsed'));
+  const set = new Set();
+  groups.forEach(g => {
+    g.classList.toggle('collapsed', anyOpen);
+    if (anyOpen) set.add(g.dataset.phase);
+  });
+  saveCollapsed(set);
+  e.target.textContent = anyOpen ? 'Expand all' : 'Collapse all';
+});
+
+/* rail resize -------------------------------------------------------------- */
+(function railResize() {
+  const resizer = document.getElementById('railResizer');
+  const stored = parseInt(localStorage.getItem(SITE_KEY + ':railw') || '0', 10);
+  if (stored >= 220 && stored <= 460) document.documentElement.style.setProperty('--rail-w', stored + 'px');
+  let dragging = false;
+  resizer.addEventListener('mousedown', e => {
+    dragging = true; resizer.classList.add('dragging');
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const w = Math.min(460, Math.max(220, e.clientX));
+    document.documentElement.style.setProperty('--rail-w', w + 'px');
+  });
+  window.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false; resizer.classList.remove('dragging');
+    document.body.style.userSelect = '';
+    const w = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--rail-w'), 10);
+    try { localStorage.setItem(SITE_KEY + ':railw', String(w)); } catch (err) {}
+    refitAllDiagrams();
+  });
+})();
+
+/* -------------------------------------------------------------------- home */
+function phaseCardsHtml(groups, keys) {
+  return keys.map(pk => {
+    const meta = PHASES[pk] || { vi: 'Khác', en: 'Other' };
+    const first = groups[pk].sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }))[0];
+    return '<a class="phase-card" href="#' + first.slug + '">' +
+      '<span class="card-num">' + escapeHtml(pk) + '</span>' +
+      '<span class="card-vi">' + escapeHtml(meta.vi) + '</span>' +
+      '<span class="card-en">' + escapeHtml(meta.en) + '</span>' +
+      '<div class="doc-count">' + groups[pk].length + ' document' + (groups[pk].length > 1 ? 's' : '') + '</div>' +
+    '</a>';
+  }).join('');
+}
+
+/* The front page is the overview document when the set has one — the page that
+   says what the project is and which document answers which question. The
+   generated phase grid is the fallback for a set that has not written one yet;
+   it can only say how many documents exist. */
+function renderHome() {
+  const groups = groupByPhase();
+  const keys = phaseKeysSorted(groups);
+  const siteTitle = document.getElementById('siteTitle').textContent;
+
+  if (HOME_IDX >= 0) {
+    currentIdx = HOME_IDX;
+    const meta = MANIFEST[HOME_IDX];
+    document.title = meta.title + ' · ' + siteTitle;
+    renderMarkdownInto(docEl, sourceOf(HOME_IDX), meta);
+    if (isDirty(HOME_IDX)) showDraftBanner(HOME_IDX);
+    if (keys.length) {
+      const nav = document.createElement('div');
+      nav.className = 'phase-nav';
+      nav.innerHTML = '<div class="nav-label">Browse by phase</div>' +
+        '<div class="phase-cards">' + phaseCardsHtml(groups, keys) + '</div>';
+      docEl.appendChild(nav);
+    }
+    buildToc(collectHeadings(docEl));
+    highlightRail(null);
+    if (editing) enterEditor(HOME_IDX);
+    else if (pendingFrag) scrollToPendingFrag();
+    else window.scrollTo(0, 0);
+    return;
+  }
+
+  document.title = siteTitle;
+  docEl.innerHTML =
+    '<div class="home-hero">' +
+      '<div class="eyebrow">Documentation set</div>' +
+      '<h1>' + escapeHtml(siteTitle) + '</h1>' +
+      '<p class="lede">' + MANIFEST.length + ' documents across ' + keys.length +
+      ' phases. Pick a phase below, or a document on the left.</p>' +
+    '</div>' +
+    '<div class="phase-cards">' + phaseCardsHtml(groups, keys) + '</div>';
+  tocEl.innerHTML = '';
+  currentIdx = -1;
+  highlightRail(null);
+  setEditing(false);
+}
+
+/* `slug` null means the overview page, which is reached at the empty hash. */
+function highlightRail(slug) {
+  railList.querySelectorAll('.doc-link').forEach(a => a.classList.toggle('active', a.dataset.slug === slug));
+  railList.querySelector('.home-link')?.classList.toggle('active', slug === null);
+  railEl.classList.remove('open');
+}
+
+/* --------------------------------------------------------------- rendering */
+/* A heading a cross-document link asked for, remembered across the navigation
+   that renders the document it lives in. */
+let pendingFrag = null;
+
+function rewriteDocLinks(target, meta) {
+  const fromRel = (meta && meta.rel_path) || '';
+  target.querySelectorAll('a[href]').forEach(a => {
+    const href = a.getAttribute('href') || '';
+    if (/^([a-z][a-z0-9+.-]*:|#|\/)/i.test(href)) return;   // absolute, in-page, or rooted
+    const hash = href.indexOf('#');
+    const path = hash === -1 ? href : href.slice(0, hash);
+    const frag = hash === -1 ? '' : href.slice(hash + 1);
+    if (!/\.md$/i.test(path)) return;
+
+    const slug = LINK_MAP[resolveRelPath(fromRel, path)] || LINK_MAP[path.split('/').pop()];
+    if (!slug) {
+      // Left exactly as written: the link still resolves in the repo, and a
+      // silently rewritten dead link is harder to notice than a visible one.
+      // A one-document export links out of itself by design, so only the site
+      // build — where the whole set is present — flags the miss.
+      if (!CONFIG.single) {
+        a.classList.add('dead-link');
+        a.title = 'Not in this build: ' + href;
+      }
+      return;
+    }
+    const isHome = MANIFEST.some(d => d.slug === slug && d.home);
+    const want = isHome ? '' : slug;
+    a.setAttribute('href', want ? '#' + want : '#');
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      pendingFrag = frag || null;
+      // Re-render by hand when the hash is already what we want, since the
+      // browser fires no hashchange for a navigation to the current address.
+      if (location.hash.replace(/^#/, '') === want) route();
+      else location.hash = want;
+    });
+  });
+}
+
+/* Heading ids are generated from the heading text, so an id lookup covers the
+   ASCII case; the fallback compares diacritics-stripped text, which is what a
+   fragment written by hand in a Vietnamese document actually looks like. */
+function scrollToPendingFrag() {
+  if (!pendingFrag) return;
+  const want = pendingFrag;
+  pendingFrag = null;
+  requestAnimationFrame(() => {
+    // marked percent-encodes non-ASCII hrefs, so a Vietnamese fragment arrives
+    // as "%C3%AA..." and matches nothing until it is decoded.
+    let decoded = want;
+    try { decoded = decodeURIComponent(want); } catch (e) {}
+    const norm = s => s.toLowerCase().normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '').replace(/\u0111/g, 'd').replace(/[^a-z0-9]+/g, '');
+    const target = document.getElementById(want) || document.getElementById(decoded) ||
+      [...docEl.querySelectorAll('h1, h2, h3')].find(h => norm(h.textContent) === norm(decoded));
+    target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+}
+
+function renderMarkdownInto(target, src, meta) {
+  const gen = ++renderSeq;
+  target.innerHTML = marked.parse(src, { gfm: true, breaks: false });
+
+  const h1 = target.querySelector('h1');
+  // The overview page is the front page: it has no phase to breadcrumb into and
+  // no status of its own — it carries the statuses of everything else.
+  if (meta && !meta.home) {
+    const phaseMeta = PHASES[meta.phase] || { vi: 'Khác', en: 'Other' };
+    const crumb = document.createElement('div');
+    crumb.className = 'crumb';
+    const root = CONFIG.single ? '<span>Docs</span>' : '<a href="#">Docs</a>';
+    crumb.innerHTML = root + '<span class="sep">/</span><span>' +
+      escapeHtml(phaseMeta.vi) + '</span><span class="sep">/</span><span>' + escapeHtml(meta.id) + '</span>';
+    target.insertBefore(crumb, h1);
+
+    if (meta.status || meta.owner || meta.updated) {
+      const row = document.createElement('div');
+      row.className = 'doc-meta-row';
+      const bits = [];
+      if (meta.status) bits.push('<span class="status-pill ' + statusClass(meta.status) + '">' + escapeHtml(meta.status) + '</span>');
+      if (meta.owner) bits.push('<span class="meta-item">' + escapeHtml(meta.owner) + '</span>');
+      if (meta.updated) bits.push('<span class="meta-item">Updated ' + escapeHtml(meta.updated) + '</span>');
+      row.innerHTML = bits.join('<span class="sep-dot">·</span>');
+      target.insertBefore(row, h1);
+    }
+  }
+
+  // The front-matter table has empty headers — render it as a metadata block.
+  const firstTable = target.querySelector('table');
+  if (firstTable) {
+    const heads = [...firstTable.querySelectorAll('thead th')].map(th => th.textContent.trim());
+    if (heads.length && heads.every(h => h === '')) {
+      firstTable.classList.add('meta');
+      firstTable.querySelector('thead')?.remove();
+    }
+  }
+
+  target.querySelectorAll('code').forEach(c => {
+    const t = c.textContent.trim();
+    if (/^(BR|UC|TC|R|AC|I|F)[-\d]/.test(t) && t.length <= 14) c.classList.add('spec-id');
+  });
+
+  rewriteDocLinks(target, meta);
+
+  // Tables get their own horizontal scroller so none of them can widen the page.
+  target.querySelectorAll('table').forEach(tb => {
+    if (tb.classList.contains('meta')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'table-wrap';
+    tb.parentNode.insertBefore(wrap, tb);
+    wrap.appendChild(tb);
+  });
+
+  target.querySelectorAll('pre > code.language-mermaid').forEach(code => {
+    const frame = buildDiagramFrame({ kind: 'mermaid', source: code.textContent, caption: captionAfter(code.parentElement) });
+    code.parentElement.replaceWith(frame);
+  });
+
+  // Relative image paths are resolved against the build-time map. The Markdown
+  // itself keeps the path it was written with, so an edit saved from this page
+  // never turns a diagram reference into a base64 blob.
+  const imgMap = (meta && IMAGES[meta.slug]) || {};
+  target.querySelectorAll('img').forEach(img => {
+    const written = img.getAttribute('src') || '';
+    const resolved = imgMap[written] || (/^(https?:|data:)/.test(written) ? written : '');
+    const holder = img.closest('p') || img;
+    if (!resolved) {
+      const miss = document.createElement('div');
+      miss.className = 'diagram-error';
+      miss.innerHTML = '<b>Image not bundled</b>' + escapeHtml(written) +
+        '\nRebuild the site after adding the file, or check the path.';
+      holder.replaceWith(miss);
+      return;
+    }
+    const frame = buildDiagramFrame({
+      kind: 'image', src: resolved, alt: img.alt,
+      caption: captionAfter(holder) || img.alt || ''
+    });
+    holder.replaceWith(frame);
+  });
+
+  // Promote genuinely wide tables into the diagram track rather than letting
+  // them scroll inside a 780px column.
+  requestAnimationFrame(() => {
+    target.querySelectorAll('.table-wrap').forEach(w => {
+      const tb = w.querySelector('table');
+      if (tb && tb.scrollWidth > w.clientWidth + 4) w.classList.add('wide');
+    });
+  });
+
+  renderDiagrams(target, gen, (meta && meta.slug) || 'home');
+}
+
+/* A paragraph directly after a diagram is its caption; consume it. */
+function captionAfter(node) {
+  const next = node.nextElementSibling;
+  if (next && next.tagName === 'P' && next.textContent.trim()) {
+    const text = next.textContent.trim();
+    next.remove();
+    return text;
+  }
+  return '';
+}
+
+function renderDoc(slug) {
+  const idx = MANIFEST.findIndex(d => d.slug === slug);
+  // The overview page has one address, the empty hash, so a link written to its
+  // filename lands on the front page rather than on a second copy of it.
+  if (idx === -1 || MANIFEST[idx].home) { renderHome(); return; }
+  currentIdx = idx;
+  const meta = MANIFEST[idx];
+  document.title = meta.title + ' · ' + document.getElementById('siteTitle').textContent;
+
+  renderMarkdownInto(docEl, sourceOf(idx), meta);
+  if (isDirty(idx)) showDraftBanner(idx);
+
+  buildToc(collectHeadings(docEl));
+  highlightRail(slug);
+
+  if (editing) enterEditor(idx);
+  else if (pendingFrag) scrollToPendingFrag();
+  else window.scrollTo(0, 0);
+}
+
+function collectHeadings(root) {
+  const seen = {}, items = [];
+  root.querySelectorAll('h2, h3').forEach(h => {
+    let id = h.textContent.trim().toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-') || 'section';
+    if (seen[id]) { id += '-' + (++seen[id]); } else { seen[id] = 1; }
+    h.id = id;
+    items.push({ id, text: h.textContent, level: h.tagName });
+  });
+  return items;
+}
+
+function buildToc(items) {
+  if (!items.length) { tocEl.innerHTML = ''; return; }
+  let html = '<div class="toc-label">On this page</div>';
+  items.forEach(it => {
+    html += '<a href="#' + it.id + '" class="' + (it.level === 'H3' ? 'lvl3' : '') + '">' + escapeHtml(it.text) + '</a>';
+  });
+  tocEl.innerHTML = html;
+  tocEl.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      document.getElementById(a.getAttribute('href').slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+}
+
+/* ---------------------------------------------------------------- diagrams */
+function buildDiagramFrame({ kind, source, src, alt, caption }) {
+  const figure = document.createElement('figure');
+  figure.className = 'diagram-frame';
+  figure.dataset.fit = 'width';
+  if (kind === 'mermaid') figure.dataset.mermaid = source;
+
+  const canvas = document.createElement('div');
+  canvas.className = 'diagram-canvas';
+
+  const tag = document.createElement('span');
+  tag.className = 'diagram-source-tag';
+  tag.textContent = kind === 'mermaid' ? 'Mermaid' : 'Image';
+  canvas.appendChild(tag);
+
+  const toolbar = document.createElement('div');
+  toolbar.className = 'diagram-toolbar';
+  toolbar.innerHTML =
+    '<button data-act="fit" class="on" title="Fit the diagram to the page width">FIT</button>' +
+    '<button data-act="actual" title="Show the diagram at its natural size">1:1</button>' +
+    '<button data-act="zoom" title="Open full screen">⤢</button>' +
+    '<button data-act="dl" title="Download">⇩</button>';
+  toolbar.addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    e.stopPropagation();
+    const act = btn.dataset.act;
+    if (act === 'fit' || act === 'actual') {
+      figure.dataset.fit = act === 'fit' ? 'width' : 'actual';
+      toolbar.querySelectorAll('button').forEach(b => {
+        if (b.dataset.act === 'fit' || b.dataset.act === 'actual') b.classList.toggle('on', b.dataset.act === act);
+      });
+      fitDiagram(figure);
+    } else if (act === 'zoom') {
+      openLightbox(figure, caption || alt || '');
+    } else if (act === 'dl') {
+      downloadDiagram(figure, kind);
+    }
+  });
+  canvas.appendChild(toolbar);
+
+  const inner = document.createElement('div');
+  inner.className = 'diagram-inner';
+  if (kind === 'image') {
+    const im = document.createElement('img');
+    im.src = src; im.alt = alt || '';
+    im.addEventListener('load', () => fitDiagram(figure));
+    inner.appendChild(im);
+  }
+  canvas.appendChild(inner);
+
+  canvas.addEventListener('click', e => {
+    if (e.target.closest('.diagram-toolbar')) return;
+    openLightbox(figure, caption || alt || '');
+  });
+  canvas.style.cursor = 'zoom-in';
+
+  figure.appendChild(canvas);
+  if (caption) {
+    const cap = document.createElement('figcaption');
+    cap.className = 'diagram-caption';
+    cap.textContent = caption;
+    figure.appendChild(cap);
+  }
+  return figure;
+}
+
+let mermaidSeq = 0;
+/* Every render of a document gets a number. Mermaid rendering is asynchronous
+   and the live preview replaces the whole document on each keystroke burst, so
+   without this an `await` that started two renders ago wakes up and writes its
+   SVG into an element that is no longer in the page — the diagram just never
+   appears. That is the "mermaid is broken in the editor" bug. */
+let renderSeq = 0;
+/* Rendered SVG keyed by its fence source, so typing a paragraph does not
+   re-parse every diagram in the file: an unchanged fence is a map lookup, and
+   only the one you are editing reaches mermaid at all. */
+const mermaidCache = new Map();
+/* The last SVG each diagram *slot* successfully showed, keyed by document and
+   position. The cache above is keyed by source, so it has nothing for a fence
+   you are halfway through retyping; this one does, and showing it dimmed is
+   what stops the page turning into a column of red boxes while you type. */
+const lastGood = new Map();
+const failTimers = new Map();
+/* mermaid.render() is not re-entrant. It parks a scratch <div id="d<id>"> on
+   the body and reads shared config while it works, so two renders in flight at
+   once fail in ways that have nothing to do with either diagram — and a live
+   preview that starts a render every 180ms is exactly how they overlap. One
+   chain, one render at a time. */
+let mermaidChain = Promise.resolve();
+function renderOne(code) {
+  const run = mermaidChain.then(async () => {
+    const id = 'mmd-' + (++mermaidSeq);
+    try {
+      return await mermaid.render(id, code);
+    } finally {
+      // A failed render leaves its scratch div — with a half-drawn diagram or
+      // mermaid's own error graphic inside it — attached to the body. Left
+      // there they stack up, which is the page filling with broken diagrams
+      // nobody wrote. Clean up by this render's own id, not by a counter that
+      // another render may already have moved.
+      document.getElementById('d' + id)?.remove();
+      document.getElementById(id)?.remove();
+    }
+  });
+  mermaidChain = run.then(() => {}, () => {});   // one failure must not stall the queue
+  return run;
+}
+
+function paintDiagram(fig, svg, mode) {
+  const inner = fig.querySelector('.diagram-inner');
+  if (!inner) return;
+  inner.innerHTML = svg;
+  fig.dataset.parse = mode || 'ok';
+  fitDiagram(fig);
+}
+
+function paintDiagramError(fig, msg) {
+  const inner = fig.querySelector('.diagram-inner');
+  if (!inner) return;
+  fig.dataset.parse = 'error';
+  inner.innerHTML = '<div class="diagram-error"><b>Mermaid could not render this diagram</b>' +
+    escapeHtml(msg) + '</div>';
+}
+
+const ESCALATE_MS = 1400;
+function showDiagramError(fig, err) {
+  const slot = fig.dataset.slot;
+  const code = fig.dataset.mermaid;
+  const msg = (err && err.message ? err.message : String(err)).slice(0, 400);
+  clearTimeout(failTimers.get(slot));
+
+  // Reading view: a fence that does not parse is loud immediately. A published
+  // document whose diagram is broken must not look finished.
+  const stale = lastGood.get(slot);
+  if (!editing || !stale) { paintDiagramError(fig, msg); return; }
+
+  // Editing: hold the last good drawing and let the error arrive when you stop
+  // typing and it is still broken. Re-query the frame at that point — the
+  // preview rebuilds its DOM on every burst, so this element is likely gone.
+  fig.dataset.parse = 'typing';
+  failTimers.set(slot, setTimeout(() => {
+    const live = docEl.querySelector('.diagram-frame[data-slot="' + slot + '"]');
+    if (live && live.dataset.mermaid === code && live.dataset.parse === 'typing') paintDiagramError(live, msg);
+  }, ESCALATE_MS));
+}
+
+async function renderDiagrams(root, gen, docKey) {
+  const frames = [...root.querySelectorAll('.diagram-frame[data-mermaid]')];
+
+  // Pass 1 is synchronous and paints every frame before the browser gets the
+  // chance to show a gap: this render's own SVG when the fence is unchanged,
+  // otherwise whatever this slot drew last. Typing in one fence must never
+  // blank the diagrams around it.
+  const pending = [];
+  frames.forEach((fig, i) => {
+    const code = fig.dataset.mermaid;
+    const slot = docKey + '#' + i;
+    fig.dataset.slot = slot;
+    const hit = mermaidCache.get(code);
+    if (hit) { lastGood.set(slot, hit); clearTimeout(failTimers.get(slot)); paintDiagram(fig, hit); return; }
+    const stale = lastGood.get(slot);
+    if (stale) paintDiagram(fig, stale, 'stale');
+    pending.push(fig);
+  });
+
+  // Pass 2: only fences that actually changed reach mermaid.
+  for (const fig of pending) {
+    if (gen !== renderSeq) return;   // a newer render owns the DOM now
+    const code = fig.dataset.mermaid;
+    try {
+      const { svg, bindFunctions } = await renderOne(code);
+      if (gen !== renderSeq) return;
+      if (mermaidCache.size > 200) mermaidCache.clear();
+      mermaidCache.set(code, svg);
+      lastGood.set(fig.dataset.slot, svg);
+      clearTimeout(failTimers.get(fig.dataset.slot));
+      paintDiagram(fig, svg);
+      if (bindFunctions) bindFunctions(fig.querySelector('.diagram-inner'));
+    } catch (err) {
+      if (gen !== renderSeq) return;
+      showDiagramError(fig, err);
+    }
+  }
+  root.querySelectorAll('.diagram-frame:not([data-mermaid])').forEach(fitDiagram);
+  // Diagrams settle after the text does, and each one changes the preview's
+  // height — re-align the panes once they are final, not before.
+  if (editing && gen === renderSeq) syncPanes(editArea, docEl);
+}
+
+/* Size a diagram against the page, with legible text as the target rather than
+   a full-width box. Two bounds do the work:
+   - never enlarge past MAX_UPSCALE — a three-node context diagram blown up to
+     1100px is as unreadable as a tiny one, just in the other direction;
+   - never shrink a vector past MIN_VECTOR_SCALE — below that the labels stop
+     being readable, so the canvas scrolls (and the lightbox pans) instead.
+   Raster images are only ever shrunk: a 2x-DPI PNG export is meant to be. */
+const MAX_UPSCALE = 1.25;
+// 14px mermaid text at 0.55 is ~7.7px — the point where a label stops being
+// readable at all. Above it, fitting beats scrolling; below it, scrolling (and
+// the full-screen view) beats an unreadable picture.
+const MIN_VECTOR_SCALE = 0.55;
+function fitDiagram(fig) {
+  const canvas = fig.querySelector('.diagram-canvas');
+  const el = fig.querySelector('svg, img');
+  if (!canvas || !el) return;
+
+  let w, h;
+  if (el.tagName.toLowerCase() === 'svg') {
+    const vb = el.getAttribute('viewBox');
+    if (vb) {
+      const p = vb.split(/[\s,]+/).map(Number);
+      w = p[2]; h = p[3];
+    } else {
+      w = parseFloat(el.getAttribute('width')) || el.getBoundingClientRect().width;
+      h = parseFloat(el.getAttribute('height')) || el.getBoundingClientRect().height;
+    }
+    el.removeAttribute('width');
+    el.removeAttribute('height');
+    el.style.maxWidth = 'none';
+    el.style.maxHeight = 'none';
+  } else {
+    w = el.naturalWidth || el.getBoundingClientRect().width;
+    h = el.naturalHeight || el.getBoundingClientRect().height;
+  }
+  if (!w || !h) return;
+  fig.dataset.w = w; fig.dataset.h = h;
+
+  if (fig.dataset.fit === 'actual') {
+    el.style.width = w + 'px';
+    el.style.height = h + 'px';
+    return;
+  }
+
+  const cs = getComputedStyle(canvas);
+  const avail = canvas.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  if (avail <= 0) return;
+
+  const vector = el.tagName.toLowerCase() === 'svg';
+  let scale = Math.min(avail / w, MAX_UPSCALE);
+  if (vector) scale = Math.max(scale, MIN_VECTOR_SCALE);
+  else scale = Math.min(scale, 1);
+
+  // A landscape diagram taller than the viewport is scrolling for no reason;
+  // a portrait one (a long sequence or state chart) legitimately is.
+  if (w >= h) {
+    const maxH = Math.max(420, Math.round(window.innerHeight * 0.82));
+    if (h * scale > maxH) scale = Math.max(maxH / h, vector ? MIN_VECTOR_SCALE : 0);
+  }
+  el.style.width = Math.round(w * scale) + 'px';
+  el.style.height = 'auto';
+}
+
+const refitAllDiagrams = debounce(() => {
+  document.querySelectorAll('.diagram-frame').forEach(fitDiagram);
+}, 120);
+window.addEventListener('resize', refitAllDiagrams);
+
+function downloadDiagram(fig, kind) {
+  const el = fig.querySelector('svg, img');
+  if (!el) return;
+  const a = document.createElement('a');
+  if (el.tagName.toLowerCase() === 'svg') {
+    const clone = el.cloneNode(true);
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    const blob = new Blob([clone.outerHTML], { type: 'image/svg+xml' });
+    a.href = URL.createObjectURL(blob);
+    a.download = 'diagram.svg';
+  } else {
+    a.href = el.src;
+    a.download = (el.alt || 'diagram').replace(/[^\w.-]+/g, '-') + '.png';
+  }
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+
+/* -------------------------------------------------------------- lightbox */
+const lightbox  = document.getElementById('lightbox');
+const lbStage   = document.getElementById('lightboxStage');
+const lbCaption = document.getElementById('lightboxCaption');
+let lbScale = 1, lbX = 0, lbY = 0, lbDragging = false, lbStart = { x: 0, y: 0 }, lbNat = { w: 0, h: 0 };
+
+function applyLbTransform() {
+  const el = lbStage.firstElementChild;
+  if (el) el.style.transform = 'translate(' + lbX + 'px,' + lbY + 'px) scale(' + lbScale + ')';
+}
+function lbFit() {
+  if (!lbNat.w || !lbNat.h) return;
+  const r = lbStage.getBoundingClientRect();
+  lbScale = Math.min((r.width - 40) / lbNat.w, (r.height - 40) / lbNat.h);
+  lbX = 0; lbY = 0;
+  applyLbTransform();
+}
+function openLightbox(fig, caption) {
+  const src = fig.querySelector('svg, img');
+  if (!src) return;
+  lbStage.innerHTML = '';
+  const clone = src.cloneNode(true);
+  clone.removeAttribute('style');
+  lbNat = { w: +fig.dataset.w || 800, h: +fig.dataset.h || 600 };
+  if (clone.tagName.toLowerCase() === 'svg') {
+    clone.setAttribute('width', lbNat.w);
+    clone.setAttribute('height', lbNat.h);
+  } else {
+    clone.style.width = lbNat.w + 'px';
+    clone.style.height = lbNat.h + 'px';
+  }
+  lbStage.appendChild(clone);
+  lbCaption.textContent = caption || '';
+  lightbox.classList.add('open');
+  // Open at fit-to-screen, not 1:1 — a large diagram opening cropped is useless.
+  requestAnimationFrame(lbFit);
+}
+document.getElementById('lightboxClose').addEventListener('click', () => lightbox.classList.remove('open'));
+lightbox.addEventListener('click', e => { if (e.target === lightbox) lightbox.classList.remove('open'); });
+document.getElementById('lbZoomIn').addEventListener('click', () => { lbScale = Math.min(lbScale * 1.3, 12); applyLbTransform(); });
+document.getElementById('lbZoomOut').addEventListener('click', () => { lbScale = Math.max(lbScale / 1.3, 0.05); applyLbTransform(); });
+document.getElementById('lbZoomReset').addEventListener('click', () => { lbScale = 1; lbX = 0; lbY = 0; applyLbTransform(); });
+document.getElementById('lbZoomFit').addEventListener('click', lbFit);
+document.getElementById('lbDownload').addEventListener('click', () => {
+  const el = lbStage.firstElementChild;
+  if (!el) return;
+  const a = document.createElement('a');
+  if (el.tagName.toLowerCase() === 'svg') {
+    const blob = new Blob([el.outerHTML], { type: 'image/svg+xml' });
+    a.href = URL.createObjectURL(blob); a.download = 'diagram.svg';
+  } else { a.href = el.src; a.download = 'diagram.png'; }
+  a.click();
+});
+lbStage.addEventListener('wheel', e => {
+  e.preventDefault();
+  lbScale = Math.min(Math.max(lbScale * (e.deltaY < 0 ? 1.12 : 0.89), 0.05), 12);
+  applyLbTransform();
+}, { passive: false });
+lbStage.addEventListener('mousedown', e => {
+  lbDragging = true; lbStage.classList.add('grabbing');
+  lbStart = { x: e.clientX - lbX, y: e.clientY - lbY };
+});
+window.addEventListener('mouseup', () => { lbDragging = false; lbStage.classList.remove('grabbing'); });
+window.addEventListener('mousemove', e => {
+  if (lbDragging) { lbX = e.clientX - lbStart.x; lbY = e.clientY - lbStart.y; applyLbTransform(); }
+});
+
+/* ---------------------------------------------------------------- editing */
+const editBtn    = document.getElementById('editBtn');
+const saveBtn    = document.getElementById('saveBtn');
+const saveBtn2   = document.getElementById('saveBtn2');
+const editPathEl = document.getElementById('editPath');
+const editTarget = document.getElementById('editTarget');
+
+/* Where a Save lands, best first:
+   1. the companion server (scripts/serve_docs.py) — writes the real .md;
+   2. the File System Access API — writes a file you pick, once per document;
+   3. a plain download — you drop the file over the original yourself. */
+const fsHandles = new Map();
+function saveMode() {
+  if (CONFIG.save_endpoint) return 'server';
+  if (window.isSecureContext && window.showSaveFilePicker) return 'picker';
+  return 'download';
+}
+function saveModeLabel() {
+  return { server: 'saves to the file on disk',
+           picker: 'saves through the browser file picker',
+           download: 'downloads the .md — copy it over the original' }[saveMode()];
+}
+
+function setEditing(on) {
+  const was = editing;
+  editing = on && currentIdx >= 0;
+  shellEl.classList.toggle('editing', editing);
+  editBtn.classList.toggle('on', editing);
+  editBtn.lastChild.textContent = editing ? ' Done' : ' Edit';
+  saveBtn.hidden = !editing;
+  if (editing) {
+    enterEditor(currentIdx);
+  } else {
+    // Leaving the editor with unsaved text: re-render so the reading view shows
+    // the draft and says, in one banner, that the file on disk is still behind.
+    if (was && currentIdx >= 0) {
+      renderMarkdownInto(docEl, sourceOf(currentIdx), MANIFEST[currentIdx]);
+      if (isDirty(currentIdx)) showDraftBanner(currentIdx);
+      buildToc(collectHeadings(docEl));
+    }
+    refitAllDiagrams();
+  }
+}
+
+function enterEditor(idx) {
+  const meta = MANIFEST[idx];
+  editArea.value = sourceOf(idx);
+  editPathEl.textContent = meta.rel_path || (meta.slug + '.md');
+  editTarget.textContent = '· ' + saveModeLabel();
+  requestAnimationFrame(() => { editArea.focus(); fitPreview(); });
+}
+
+/* One scrollbar behaviour across both panes. They hold the same document at two
+   different heights, so the honest mapping is proportional: how far you are
+   through the source is how far you are through the render. A line-exact map
+   would have to measure the textarea's wrapped line boxes on every keystroke,
+   and it fights you the moment a diagram finishes rendering and changes height.
+   The lock is what stops the two panes from driving each other in a loop. */
+let syncLock = 0;
+function syncPanes(from, to) {
+  if (syncLock) return;
+  const fromMax = from.scrollHeight - from.clientHeight;
+  const toMax = to.scrollHeight - to.clientHeight;
+  if (fromMax <= 1 || toMax <= 1) return;
+  syncLock = 1;
+  to.scrollTop = Math.round((from.scrollTop / fromMax) * toMax);
+  requestAnimationFrame(() => { syncLock = 0; });
+}
+editArea.addEventListener('scroll', () => { if (editing) syncPanes(editArea, docEl); });
+docEl.addEventListener('scroll', () => { if (editing) syncPanes(docEl, editArea); });
+
+const livePreview = debounce(() => {
+  if (!editing || currentIdx < 0) return;
+  const text = editArea.value;
+  setDraft(MANIFEST[currentIdx].slug, text);
+  markDirtyInRail();
+  renderMarkdownInto(docEl, text, MANIFEST[currentIdx]);
+  buildToc(collectHeadings(docEl));
+  // The pane you are typing in owns the position; the preview follows it.
+  requestAnimationFrame(() => syncPanes(editArea, docEl));
+}, 180);
+
+function fitPreview() {
+  refitAllDiagrams();
+  requestAnimationFrame(() => syncPanes(editArea, docEl));
+}
+
+editArea.addEventListener('input', livePreview);
+editArea.addEventListener('keydown', e => {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const s = editArea.selectionStart, en = editArea.selectionEnd;
+    editArea.setRangeText('  ', s, en, 'end');
+    livePreview();
+  }
+});
+
+editBtn.addEventListener('click', () => {
+  if (currentIdx < 0) { toast('Open a document first, then edit it.'); return; }
+  setEditing(!editing);
+});
+
+function showDraftBanner(idx) {
+  if (docEl.querySelector('.draft-banner')) return;
+  const b = document.createElement('div');
+  b.className = 'draft-banner';
+  b.innerHTML = '<span>Showing unsaved local edits — the .md file on disk still has the old text.</span>';
+  const save = document.createElement('button');
+  save.textContent = 'Save to .md';
+  save.addEventListener('click', () => saveCurrent());
+  const drop = document.createElement('button');
+  drop.textContent = 'Discard';
+  drop.addEventListener('click', () => {
+    clearDraft(MANIFEST[idx].slug);
+    markDirtyInRail();
+    renderDoc(MANIFEST[idx].slug);
+  });
+  b.appendChild(save); b.appendChild(drop);
+  docEl.insertBefore(b, docEl.firstChild);
+}
+
+async function saveCurrent() {
+  if (currentIdx < 0) return;
+  const idx = currentIdx;
+  const meta = MANIFEST[idx];
+  const text = editing ? editArea.value : sourceOf(idx);
+  const mode = saveMode();
+
+  try {
+    if (mode === 'server') {
+      await saveViaServer(meta, text);
+      afterSave(idx, text, 'Saved to ' + meta.rel_path);
+      return;
+    }
+    if (mode === 'picker') {
+      try {
+        const name = await saveViaPicker(meta, text);
+        afterSave(idx, text, 'Saved ' + name);
+        return;
+      } catch (err) {
+        if (err && err.name === 'AbortError') return;
+        // Chrome exposes showSaveFilePicker on file:// pages but refuses to
+        // open it. Falling back is the difference between "save failed" and a
+        // saved document, so take the downgrade quietly.
+        console.warn('File System Access unavailable, downloading instead:', err);
+      }
+    }
+    const name = saveViaDownload(meta, text);
+    afterSave(idx, text, 'Downloaded ' + name + ' — copy it over ' + (meta.rel_path || 'the original file'));
+  } catch (err) {
+    if (err && err.name === 'AbortError') return;
+    toast('Save failed: ' + (err && err.message ? err.message : err), true);
+  }
+}
+
+async function saveViaServer(meta, text) {
+  const res = await fetch(CONFIG.save_endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path: meta.rel_path, content: text })
+  });
+  if (!res.ok) throw new Error((await res.text()).slice(0, 200) || ('HTTP ' + res.status));
+}
+
+async function saveViaPicker(meta, text) {
+  let handle = fsHandles.get(meta.slug);
+  if (handle) {
+    const perm = await handle.queryPermission({ mode: 'readwrite' });
+    if (perm !== 'granted' && (await handle.requestPermission({ mode: 'readwrite' })) !== 'granted') handle = null;
+  }
+  if (!handle) {
+    handle = await window.showSaveFilePicker({
+      suggestedName: (meta.rel_path || meta.slug + '.md').split('/').pop(),
+      types: [{ description: 'Markdown', accept: { 'text/markdown': ['.md'] } }]
+    });
+    fsHandles.set(meta.slug, handle);
+  }
+  const w = await handle.createWritable();
+  await w.write(text);
+  await w.close();
+  return handle.name;
+}
+
+function saveViaDownload(meta, text) {
+  const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (meta.rel_path || meta.slug + '.md').split('/').pop();
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  return a.download;
+}
+
+function afterSave(idx, text, message) {
+  SOURCES[idx] = text;
+  clearDraft(MANIFEST[idx].slug);
+  markDirtyInRail();
+  docEl.querySelector('.draft-banner')?.remove();
+  toast(message);
+}
+
+saveBtn.addEventListener('click', saveCurrent);
+saveBtn2.addEventListener('click', saveCurrent);
+document.getElementById('revertBtn').addEventListener('click', () => {
+  if (currentIdx < 0) return;
+  if (isDirty(currentIdx) && !confirm('Discard local changes to this document?')) return;
+  clearDraft(MANIFEST[currentIdx].slug);
+  editArea.value = SOURCES[currentIdx];
+  markDirtyInRail();
+  renderMarkdownInto(docEl, editArea.value, MANIFEST[currentIdx]);
+  buildToc(collectHeadings(docEl));
+  toast('Reverted to the file contents');
+});
+document.getElementById('copyBtn').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText(editArea.value); toast('Markdown copied'); }
+  catch (e) { toast('Clipboard blocked by the browser', true); }
+});
+
+window.addEventListener('beforeunload', e => {
+  if (anyDirty()) { e.preventDefault(); e.returnValue = ''; }
+});
+
+/* Reload from disk. Served mode only, because only there is there a disk to
+   watch. The .md files are the truth and this page is not the only thing that
+   writes them — your editor and the assistant do too — so poll their timestamps
+   and pull a changed document in without a refresh. A document with unsaved
+   edits here is left alone and said so: silently replacing your text with
+   someone else's is the one behaviour worse than being stale. */
+if (CONFIG.save_endpoint) {
+  let stamps = null;
+  setInterval(async () => {
+    let now;
+    try {
+      const res = await fetch('/__poll', { cache: 'no-store' });
+      if (!res.ok) return;
+      now = await res.json();
+    } catch (e) { return; }          // server stopped; nothing to say about it
+    if (!stamps) { stamps = now; return; }
+    const keys = new Set([...Object.keys(stamps), ...Object.keys(now)]);
+    const changed = [...keys].filter(k => stamps[k] !== now[k]);
+    const added = [...keys].filter(k => !(k in stamps) || !(k in now));
+    stamps = now;
+    if (!changed.length) return;
+
+    // A file appearing or disappearing changes the sidebar, not just a body.
+    if (added.length) {
+      if (anyDirty()) toast('Documents were added or removed on disk — save your edits, then refresh.', true);
+      else location.reload();
+      return;
+    }
+    for (const rel of changed) {
+      const idx = MANIFEST.findIndex(m => m.rel_path === rel);
+      if (idx < 0) continue;
+      if (isDirty(idx)) {
+        toast(rel + ' changed on disk, but this page has unsaved edits to it — save or discard first.', true);
+        continue;
+      }
+      let text;
+      try {
+        const r = await fetch('/__source?path=' + encodeURIComponent(rel), { cache: 'no-store' });
+        if (!r.ok) continue;
+        text = await r.text();
+      } catch (e) { continue; }
+      if (text === SOURCES[idx]) continue;   // our own save coming back to us
+      SOURCES[idx] = text;
+      if (idx !== currentIdx) continue;
+      if (editing) editArea.value = text;
+      renderMarkdownInto(docEl, text, MANIFEST[idx]);
+      buildToc(collectHeadings(docEl));
+      toast('Reloaded ' + rel + ' from disk');
+    }
+  }, 1500);
+}
+
+/* ---------------------------------------------------------------- search */
+const searchBox = document.getElementById('searchBox');
+searchBox.addEventListener('input', e => {
+  const q = e.target.value.trim().toLowerCase();
+  railList.querySelectorAll('.doc-link').forEach(a => {
+    const idx = +a.dataset.idx;
+    const inTitle = !q || a.dataset.search.includes(q);
+    const inBody = !inTitle && q.length >= 3 && SOURCES[idx].toLowerCase().includes(q);
+    a.style.display = (inTitle || inBody) ? '' : 'none';
+    a.querySelector('.body-hit')?.remove();
+    if (inBody) {
+      const hint = document.createElement('span');
+      hint.className = 'body-hit';
+      hint.textContent = 'text';
+      a.querySelector('.doc-title').appendChild(hint);
+    }
+  });
+  let anyVisibleAtAll = false;
+  railList.querySelectorAll('.phase-group').forEach(g => {
+    const any = [...g.querySelectorAll('.doc-link')].some(a => a.style.display !== 'none');
+    g.style.display = any ? '' : 'none';
+    if (any) anyVisibleAtAll = true;
+    if (q) g.classList.remove('collapsed');
+  });
+  railList.querySelector('.rail-empty')?.remove();
+  if (!anyVisibleAtAll) {
+    const empty = document.createElement('div');
+    empty.className = 'rail-empty';
+    empty.textContent = 'No document matches “' + q + '”.';
+    railList.appendChild(empty);
+  }
+});
+
+/* ------------------------------------------------------------- shortcuts */
+document.addEventListener('keydown', e => {
+  const mod = e.metaKey || e.ctrlKey;
+  if (mod && e.key.toLowerCase() === 's') { e.preventDefault(); saveCurrent(); }
+  else if (mod && e.key.toLowerCase() === 'e') { e.preventDefault(); if (currentIdx >= 0) setEditing(!editing); }
+  else if (mod && e.key.toLowerCase() === 'k') { e.preventDefault(); searchBox.focus(); searchBox.select(); }
+  else if (e.key === 'Escape') {
+    if (lightbox.classList.contains('open')) lightbox.classList.remove('open');
+    else if (document.activeElement === searchBox) { searchBox.value = ''; searchBox.dispatchEvent(new Event('input')); searchBox.blur(); }
+  }
+});
+
+document.getElementById('railToggle').addEventListener('click', () => railEl.classList.toggle('open'));
+document.getElementById('printBtn').addEventListener('click', () => window.print());
+
+/* ------------------------------------------------------------------ route */
+function route() {
+  const slug = location.hash.replace('#', '');
+  if (!slug) { renderHome(); return; }
+  if (MANIFEST.some(d => d.slug === slug)) renderDoc(slug);
+  // An in-page fragment: a Contents list linking to its own headings. Generated
+  // heading ids drop diacritics, so an id lookup alone misses every Vietnamese
+  // heading — the same resolver the cross-document links use handles both.
+  else { pendingFrag = slug; scrollToPendingFrag(); }
+}
+window.addEventListener('hashchange', route);
+
+buildRail();
+if (CONFIG.single && MANIFEST.length === 1) {
+  // One document, no set to navigate: the rail, its toggle and the
+  // cross-document search have nothing to act on.
+  railEl.style.display = 'none';
+  document.querySelector('.search-wrap').style.display = 'none';
+  document.getElementById('railToggle').style.display = 'none';
+  renderDoc(MANIFEST[0].slug);
+} else {
+  route();
+}
+</script>
+</body>
+</html>
