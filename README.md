@@ -20,15 +20,27 @@ Markdown is the source of truth. HTML is a render target, and the exported page 
 
 ## Install
 
-Drop the folder where Claude Code looks for skills — project-scoped or global:
+**Claude Code, as a plugin** — read-only, updates when this repo does:
 
 ```bash
-# One project only
-git clone <repo-url> .claude/skills/software-docs
-
-# Every project on this machine
-git clone <repo-url> ~/.claude/skills/software-docs
+claude plugin marketplace add edwintruong/skills
+claude plugin install software-docs@edwintruong
 ```
+
+**Codex, and other Agent Skills-compatible harnesses** — editable local files:
+
+```bash
+npx skills@latest add edwintruong/skills
+```
+
+**Manual, any harness** — clone straight into the skills folder it reads from:
+
+```bash
+git clone https://github.com/edwintruong/skills .claude/skills/software-docs    # one project
+git clone https://github.com/edwintruong/skills ~/.claude/skills/software-docs  # every project
+```
+
+Pick one — the plugin path and the manual clone put the same skill in two places if combined.
 
 Requirements:
 
@@ -239,6 +251,9 @@ The `file://` build keeps the editor too, degrading in a defined order: the comp
 ```
 software-docs/
   SKILL.md                   the skill itself — router, workflow, rules
+  .claude-plugin/            plugin.json + marketplace.json — makes this repo
+                             installable with `claude plugin install`
+  .codex-plugin/             plugin.json — same, for Codex
   references/                one file per document type: template + failure modes
     0.1-visual-style.md      page skeleton, palette, captions, tables, file naming
     0.2-writing-principles.md  interface vs implementation, completeness, approvals

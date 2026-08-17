@@ -1,0 +1,17 @@
+{
+  "name": "edwintruong",
+  "owner": {
+    "name": "DatTruong",
+    "email": "truongdat.work@gmail.com"
+  },
+  "description": "DatTruong's Claude Code skills, as installable plugins.",
+  "plugins": [
+    {
+      "name": "software-docs",
+      "source": "./",
+      "description": "Write clean, consistent software documentation that acts as a contract between BE, FE, AI and data engineers.",
+      "category": "documentation",
+      "keywords": ["documentation", "sdd", "use-cases", "api-contract"]
+    }
+  ]
+}
