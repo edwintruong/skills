@@ -496,8 +496,100 @@
     .diagram-canvas { padding: 12px; }
   }
 
+
+  /* ------------------------------------------------ review: edit + see it
+     Three affordances that only exist while a human is correcting what the
+     assistant wrote: a block you clicked in the render, a block that differs
+     from the baseline, and a diagram opened in its own editor. */
+  main.doc [data-line] { scroll-margin-top: 70px; }
+  .shell.editing main.doc [data-line]:hover {
+    outline: 1px dashed var(--line); outline-offset: 3px; cursor: text;
+  }
+  .shell.editing main.doc .diagram-frame[data-line]:hover { outline-offset: 6px; }
+  main.doc [data-line].src-focus {
+    outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 3px;
+  }
+  /* Changed against the baseline. A left bar, not a background wash: the text
+     has to stay as readable as the rest of the page while you work through it. */
+  main.doc [data-line].chg { position: relative; }
+  main.doc [data-line].chg::before {
+    content: ''; position: absolute; left: -14px; top: 0; bottom: 0;
+    width: 3px; border-radius: 2px; background: var(--amber);
+  }
+  .shell.editing main.doc [data-line].chg::before { left: -10px; }
+  main.doc.hide-chg [data-line].chg::before { display: none; }
+
+  .chg-bar {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    padding: 7px 12px; border-bottom: 1px solid var(--line); flex: 0 0 auto;
+    background: var(--amber-soft); color: var(--amber); font-size: 12px;
+  }
+  .chg-bar b { font-weight: 600; }
+  .chg-bar .spacer { flex: 1 1 auto; }
+  .chg-bar button {
+    border: 1px solid rgba(166,107,34,0.4); background: transparent; color: var(--amber);
+    border-radius: 6px; padding: 3px 8px; font-size: 11.5px; cursor: pointer;
+  }
+  .chg-bar button:hover { background: rgba(166,107,34,0.12); }
+  .chg-list {
+    max-height: 170px; overflow-y: auto; border-bottom: 1px solid var(--line);
+    background: var(--paper); font-size: 12px; flex: 0 0 auto;
+  }
+  .chg-list.hidden { display: none; }
+  .chg-list button {
+    display: block; width: 100%; text-align: left; border: 0; background: transparent;
+    padding: 6px 12px; cursor: pointer; color: var(--ink-soft);
+    border-bottom: 1px solid var(--line-soft); font-size: 12px;
+  }
+  .chg-list button:hover { background: var(--accent-soft); color: var(--accent-ink); }
+  .chg-list .ln { font-family: var(--mono); font-size: 10.5px; color: var(--ink-faint); margin-right: 8px; }
+  .chg-list .kind { font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; margin-right: 6px; }
+  .chg-list .kind.add { color: #2f7a4f; }
+  .chg-list .kind.edit { color: var(--amber); }
+
+  /* ----------------------------------------------------- diagram editor */
+  .dgm { position: fixed; inset: 0; z-index: 130; display: none; background: rgba(10,14,18,0.55); }
+  .dgm.open { display: flex; align-items: center; justify-content: center; padding: 26px; }
+  .dgm-box {
+    background: var(--paper-raised); border-radius: 12px; border: 1px solid var(--line);
+    width: min(1300px, 100%); height: min(820px, 100%); display: flex; flex-direction: column;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.3); overflow: hidden;
+  }
+  .dgm-head {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--paper);
+  }
+  .dgm-head .title { font-size: 13px; font-weight: 600; }
+  .dgm-head .where { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); }
+  .dgm-head .spacer { flex: 1 1 auto; }
+  .dgm-body { flex: 1 1 auto; display: grid; grid-template-columns: minmax(280px, 42%) 1fr; min-height: 0; }
+  .dgm-src { display: flex; flex-direction: column; border-right: 1px solid var(--line); min-width: 0; }
+  .dgm-snips { display: flex; gap: 5px; flex-wrap: wrap; padding: 7px 9px; border-bottom: 1px solid var(--line); background: var(--paper); }
+  .dgm-snips button {
+    border: 1px solid var(--line); background: var(--paper-raised); color: var(--ink-soft);
+    border-radius: 6px; padding: 3px 7px; font-size: 11px; cursor: pointer;
+  }
+  .dgm-snips button:hover { border-color: var(--accent); color: var(--accent-ink); }
+  #dgmArea {
+    flex: 1 1 auto; width: 100%; min-height: 0; resize: none; border: 0; outline: none;
+    padding: 12px 14px; font-family: var(--mono); font-size: 12.5px; line-height: 1.65;
+    color: var(--ink); background: var(--paper-raised); tab-size: 2;
+  }
+  .dgm-view { display: flex; flex-direction: column; min-width: 0; background: var(--paper); }
+  .dgm-stage { flex: 1 1 auto; overflow: auto; display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .dgm-stage svg { max-width: 100%; height: auto; }
+  .dgm-msg {
+    padding: 8px 14px; border-top: 1px solid var(--line); font-family: var(--mono);
+    font-size: 11.5px; min-height: 34px; color: var(--ink-faint); white-space: pre-wrap;
+    max-height: 120px; overflow-y: auto;
+  }
+  .dgm-msg.bad { color: #a33; background: #fdf2f2; }
+  .dgm-msg.ok { color: #2f7a4f; }
+  @media (max-width: 900px) { .dgm-body { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; } .dgm-src { border-right: 0; border-bottom: 1px solid var(--line); } }
+
   @media print {
-    .topbar, .rail, .toc-col, .edit-pane, .diagram-toolbar, .diagram-source-tag, .draft-banner, .toast { display: none !important; }
+    .topbar, .rail, .toc-col, .edit-pane, .diagram-toolbar, .diagram-source-tag, .draft-banner, .toast, .chg-bar, .chg-list, .dgm { display: none !important; }
+    main.doc [data-line].chg::before { display: none; }
     .shell, .split { display: block; }
     main.doc { max-width: none; padding: 0; display: block; }
     .diagram-frame { break-inside: avoid; }
@@ -551,6 +643,14 @@
           <button class="icon-btn" id="copyBtn" title="Copy the Markdown to the clipboard">Copy</button>
           <button class="icon-btn primary" id="saveBtn2">Save .md</button>
         </div>
+        <div class="chg-bar" id="chgBar" hidden>
+          <b id="chgCount">0 khối đã đổi</b>
+          <span id="chgBase"></span>
+          <span class="spacer"></span>
+          <button id="chgToggleList">Danh sách</button>
+          <button id="chgToggleMark">Ẩn dấu</button>
+        </div>
+        <div class="chg-list hidden" id="chgList"></div>
         <textarea id="editArea" spellcheck="false" wrap="soft"></textarea>
       </section>
       <main class="doc" id="doc"><p style="color:#8b94a0">Loading…</p></main>
@@ -569,6 +669,28 @@
     <button id="lbZoomIn">+</button>
     <span class="lightbox-caption" id="lightboxCaption"></span>
     <button id="lbDownload">Download SVG</button>
+  </div>
+</div>
+
+<div class="dgm" id="dgm">
+  <div class="dgm-box">
+    <div class="dgm-head">
+      <span class="title">Sửa sơ đồ</span>
+      <span class="where" id="dgmWhere"></span>
+      <span class="spacer"></span>
+      <button class="icon-btn" id="dgmCancel" title="Đóng, không áp dụng (Esc)">Huỷ</button>
+      <button class="icon-btn primary" id="dgmApply" title="Ghi lại vào Markdown (Ctrl/Cmd+Enter)">Áp dụng</button>
+    </div>
+    <div class="dgm-body">
+      <div class="dgm-src">
+        <div class="dgm-snips" id="dgmSnips"></div>
+        <textarea id="dgmArea" spellcheck="false" wrap="off"></textarea>
+      </div>
+      <div class="dgm-view">
+        <div class="dgm-stage" id="dgmStage"></div>
+        <div class="dgm-msg" id="dgmMsg"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -978,6 +1100,11 @@ function scrollToPendingFrag() {
 function renderMarkdownInto(target, src, meta) {
   const gen = ++renderSeq;
   target.innerHTML = marked.parse(src, { gfm: true, breaks: false });
+  // Before anything moves elements around: every top-level block learns which
+  // source lines it came from. That one fact is what makes a click in the
+  // render land in the right place in the Markdown, and what lets a diff
+  // against the baseline be shown on the page instead of in a terminal.
+  tagSourceLines(target, src);
 
   const h1 = target.querySelector('h1');
   // The overview page is the front page: it has no phase to breadcrumb into and
@@ -1025,13 +1152,16 @@ function renderMarkdownInto(target, src, meta) {
     if (tb.classList.contains('meta')) return;
     const wrap = document.createElement('div');
     wrap.className = 'table-wrap';
+    carryLines(tb, wrap);
     tb.parentNode.insertBefore(wrap, tb);
     wrap.appendChild(tb);
   });
 
   target.querySelectorAll('pre > code.language-mermaid').forEach(code => {
-    const frame = buildDiagramFrame({ kind: 'mermaid', source: code.textContent, caption: captionAfter(code.parentElement) });
-    code.parentElement.replaceWith(frame);
+    const pre = code.parentElement;
+    const frame = buildDiagramFrame({ kind: 'mermaid', source: code.textContent, caption: captionAfter(pre) });
+    carryLines(pre, frame);
+    pre.replaceWith(frame);
   });
 
   // Relative image paths are resolved against the build-time map. The Markdown
@@ -1054,6 +1184,7 @@ function renderMarkdownInto(target, src, meta) {
       kind: 'image', src: resolved, alt: img.alt,
       caption: captionAfter(holder) || img.alt || ''
     });
+    carryLines(holder, frame);
     holder.replaceWith(frame);
   });
 
@@ -1067,6 +1198,7 @@ function renderMarkdownInto(target, src, meta) {
   });
 
   renderDiagrams(target, gen, (meta && meta.slug) || 'home');
+  if (target === docEl) markChanged();
 }
 
 /* A paragraph directly after a diagram is its caption; consume it. */
@@ -1085,6 +1217,7 @@ function renderDoc(slug) {
   // The overview page has one address, the empty hash, so a link written to its
   // filename lands on the front page rather than on a second copy of it.
   if (idx === -1 || MANIFEST[idx].home) { renderHome(); return; }
+  if (idx !== currentIdx) changedSet = null;   // the diff belongs to one document
   currentIdx = idx;
   const meta = MANIFEST[idx];
   document.title = meta.title + ' · ' + document.getElementById('siteTitle').textContent;
@@ -1094,6 +1227,7 @@ function renderDoc(slug) {
 
   buildToc(collectHeadings(docEl));
   highlightRail(slug);
+  recomputeDiff();
 
   if (editing) enterEditor(idx);
   else if (pendingFrag) scrollToPendingFrag();
@@ -1146,6 +1280,7 @@ function buildDiagramFrame({ kind, source, src, alt, caption }) {
   toolbar.innerHTML =
     '<button data-act="fit" class="on" title="Fit the diagram to the page width">FIT</button>' +
     '<button data-act="actual" title="Show the diagram at its natural size">1:1</button>' +
+    (kind === 'mermaid' ? '<button data-act="edit" title="Sửa sơ đồ này (Mermaid) và xem hình đổi theo">✎</button>' : '') +
     '<button data-act="zoom" title="Open full screen">⤢</button>' +
     '<button data-act="dl" title="Download">⇩</button>';
   toolbar.addEventListener('click', e => {
@@ -1159,6 +1294,8 @@ function buildDiagramFrame({ kind, source, src, alt, caption }) {
         if (b.dataset.act === 'fit' || b.dataset.act === 'actual') b.classList.toggle('on', b.dataset.act === act);
       });
       fitDiagram(figure);
+    } else if (act === 'edit') {
+      openDiagramEditor(figure);
     } else if (act === 'zoom') {
       openLightbox(figure, caption || alt || '');
     } else if (act === 'dl') {
@@ -1179,6 +1316,8 @@ function buildDiagramFrame({ kind, source, src, alt, caption }) {
 
   canvas.addEventListener('click', e => {
     if (e.target.closest('.diagram-toolbar')) return;
+    // While editing, a diagram is a thing you fix, not a thing you enlarge.
+    if (editing && kind === 'mermaid') { openDiagramEditor(figure); return; }
     openLightbox(figure, caption || alt || '');
   });
   canvas.style.cursor = 'zoom-in';
@@ -1499,6 +1638,7 @@ function setEditing(on) {
   editBtn.classList.toggle('on', editing);
   editBtn.lastChild.textContent = editing ? ' Done' : ' Edit';
   saveBtn.hidden = !editing;
+  if (!editing) { chgBar.hidden = true; docEl.querySelectorAll('.src-focus').forEach(n => n.classList.remove('src-focus')); }
   if (editing) {
     enterEditor(currentIdx);
   } else {
@@ -1516,6 +1656,7 @@ function setEditing(on) {
 function enterEditor(idx) {
   const meta = MANIFEST[idx];
   editArea.value = sourceOf(idx);
+  recomputeDiff();
   editPathEl.textContent = meta.rel_path || (meta.slug + '.md');
   editTarget.textContent = '· ' + saveModeLabel();
   requestAnimationFrame(() => { editArea.focus(); fitPreview(); });
@@ -1547,6 +1688,7 @@ const livePreview = debounce(() => {
   markDirtyInRail();
   renderMarkdownInto(docEl, text, MANIFEST[currentIdx]);
   buildToc(collectHeadings(docEl));
+  recomputeDiff();
   // The pane you are typing in owns the position; the preview follows it.
   requestAnimationFrame(() => syncPanes(editArea, docEl));
 }, 180);
@@ -1790,6 +1932,392 @@ document.addEventListener('keydown', e => {
 
 document.getElementById('railToggle').addEventListener('click', () => railEl.classList.toggle('open'));
 document.getElementById('printBtn').addEventListener('click', () => window.print());
+
+
+/* ==================================================== the correction loop
+   Reading a document and fixing a document are two different jobs, and the
+   second one has three needs the reading view cannot serve:
+
+   * land in the right place — a claim you distrust is somewhere in a 500-line
+     file, and hunting for it in the source is where most of the effort goes;
+   * see a diagram change as you change it — a Mermaid fence is the one part of
+     a Markdown document you cannot proofread by reading it;
+   * see what you have already touched — after an hour of corrections, "which
+     parts are still the assistant's words" is the only question that matters,
+     and it is invisible in a rendered page.
+
+   All three hang off one fact computed once per render: which source lines each
+   rendered block came from. */
+
+/* -------------------------------------------------- block → source lines */
+function tagSourceLines(root, src) {
+  let tokens;
+  try { tokens = marked.lexer(src, { gfm: true }); } catch (e) { return; }
+  const spans = [];
+  let line = 1;
+  for (const t of tokens) {
+    const raw = t.raw || '';
+    const nl = (raw.match(/\n/g) || []).length;
+    if (t.type !== 'space') {
+      const body = raw.replace(/\n+$/, '');
+      const len = body === '' ? 1 : body.split('\n').length;
+      spans.push([line, line + len - 1]);
+    }
+    line += nl;
+  }
+  // marked's top-level tokens and the rendered top-level elements are the same
+  // sequence — except when a token emits no element or two. Headings re-anchor
+  // the walk so a single mismatch cannot shift every block below it.
+  const lines = src.split('\n');
+  const norm = t => t.trim().replace(/\s+/g, ' ').replace(/[*`_]/g, '');
+  let si = 0;
+  for (const el of [...root.children]) {
+    if (si >= spans.length) break;
+    if (/^H[1-6]$/.test(el.tagName)) {
+      const want = norm(el.textContent);
+      for (let k = si; k < Math.min(spans.length, si + 12); k++) {
+        const m = (lines[spans[k][0] - 1] || '').match(/^#{1,6}\s+(.*)$/);
+        if (m && norm(m[1]) === want) { si = k; break; }
+      }
+    }
+    el.dataset.line = spans[si][0];
+    el.dataset.endline = spans[si][1];
+    si++;
+  }
+}
+
+/* Wrapping a table or replacing a fence with a rendered figure must not drop
+   the mapping — the figure is exactly the element you want to click. */
+function carryLines(from, to) {
+  if (!from || !from.dataset || !from.dataset.line) return;
+  to.dataset.line = from.dataset.line;
+  to.dataset.endline = from.dataset.endline || from.dataset.line;
+}
+
+/* ------------------------------------------------------ source addressing */
+function lineStarts(text) {
+  const a = [0];
+  for (let i = 0; i < text.length; i++) if (text.charCodeAt(i) === 10) a.push(i + 1);
+  return a;
+}
+function lineRangeToChars(text, l1, l2) {
+  const st = lineStarts(text);
+  const first = Math.min(Math.max(l1, 1), st.length);
+  const last = Math.min(Math.max(l2, first), st.length);
+  const a = st[first - 1];
+  const b = last < st.length ? st[last] - 1 : text.length;
+  return [a, b];
+}
+
+/* A textarea will not scroll to a selection on its own, and setting .value to
+   force it throws away the undo history. Measure instead: a hidden div with the
+   same metrics, holding the text up to that point, is exactly as tall as the
+   editor is scrolled. */
+let mirrorEl = null;
+function scrollTextareaToChar(ta, pos) {
+  if (!mirrorEl) {
+    mirrorEl = document.createElement('div');
+    mirrorEl.style.cssText = 'position:absolute;visibility:hidden;left:-9999px;top:0;white-space:pre-wrap;word-wrap:break-word;';
+    document.body.appendChild(mirrorEl);
+  }
+  const cs = getComputedStyle(ta);
+  ['fontFamily', 'fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 'paddingLeft', 'paddingRight', 'textIndent', 'tabSize'].forEach(k => { mirrorEl.style[k] = cs[k]; });
+  mirrorEl.style.width = ta.clientWidth + 'px';
+  mirrorEl.textContent = ta.value.slice(0, pos);
+  ta.scrollTop = Math.max(0, mirrorEl.offsetHeight - ta.clientHeight * 0.3);
+}
+
+function flashFocus(el) {
+  docEl.querySelectorAll('.src-focus').forEach(n => n.classList.remove('src-focus'));
+  if (el) el.classList.add('src-focus');
+}
+
+function jumpToSource(l1, l2, el) {
+  const [a, b] = lineRangeToChars(editArea.value, l1, l2);
+  editArea.focus();
+  editArea.setSelectionRange(a, b);
+  scrollTextareaToChar(editArea, a);
+  // The jump owns both panes for a moment; without this the textarea's own
+  // scroll event drags the preview away from what you just clicked.
+  syncLock = 1;
+  setTimeout(() => { syncLock = 0; }, 300);
+  flashFocus(el);
+}
+
+/* Click the render, land in the Markdown. A diagram selects its whole fence,
+   a table row selects the table, a paragraph selects the paragraph. */
+docEl.addEventListener('click', e => {
+  if (!editing) return;
+  if (e.target.closest('a, button, .diagram-toolbar, .draft-banner')) return;
+  const el = e.target.closest('[data-line]');
+  if (!el || !docEl.contains(el)) return;
+  jumpToSource(+el.dataset.line, +(el.dataset.endline || el.dataset.line), el);
+});
+
+/* And the other way round, so the two panes always agree about where you are. */
+function blockAtLine(line) {
+  let best = null;
+  docEl.querySelectorAll('[data-line]').forEach(el => {
+    const a = +el.dataset.line, b = +(el.dataset.endline || el.dataset.line);
+    if (line >= a && line <= b) best = el;
+  });
+  return best;
+}
+const highlightFromCaret = debounce(() => {
+  if (!editing) return;
+  const upto = editArea.value.slice(0, editArea.selectionStart);
+  flashFocus(blockAtLine(upto.split('\n').length));
+}, 140);
+editArea.addEventListener('keyup', highlightFromCaret);
+editArea.addEventListener('click', highlightFromCaret);
+
+/* ------------------------------------------- what is still the draft's words
+   The baseline is the version the assistant produced: git HEAD when the file is
+   committed, otherwise its content when the server started. Everything the
+   diff marks is yours. */
+const chgBar = document.getElementById('chgBar');
+const chgCountEl = document.getElementById('chgCount');
+const chgBaseEl = document.getElementById('chgBase');
+const chgListEl = document.getElementById('chgList');
+const baselines = new Map();
+let changedSet = null;
+
+async function loadBaseline(idx) {
+  if (!CONFIG.save_endpoint || idx < 0) return null;
+  const meta = MANIFEST[idx];
+  if (baselines.has(meta.slug)) return baselines.get(meta.slug);
+  let out = null;
+  try {
+    const r = await fetch('/__baseline?path=' + encodeURIComponent(meta.rel_path || (meta.slug + '.md')), { cache: 'no-store' });
+    if (r.ok) out = await r.json();
+  } catch (e) { out = null; }
+  baselines.set(meta.slug, out);
+  return out;
+}
+
+/* Line diff. Common prefix and suffix go first — most edits touch a handful of
+   lines in a long file — and only the middle reaches the quadratic part, with a
+   size cap so a wholesale rewrite degrades to "all of it changed" instead of
+   freezing the page. */
+function changedLines(base, cur) {
+  const A = base.split('\n'), B = cur.split('\n');
+  const out = new Set();
+  let s = 0;
+  while (s < A.length && s < B.length && A[s] === B[s]) s++;
+  let e = 0;
+  while (e < A.length - s && e < B.length - s && A[A.length - 1 - e] === B[B.length - 1 - e]) e++;
+  const a = A.slice(s, A.length - e), b = B.slice(s, B.length - e);
+  if (!b.length) { if (a.length) out.add(Math.min(s + 1, B.length)); return out; }
+  if (a.length * b.length > 400000) { for (let i = 0; i < b.length; i++) out.add(s + i + 1); return out; }
+  const m = a.length, n = b.length, W = n + 1;
+  const dp = new Uint32Array((m + 1) * W);
+  for (let i = m - 1; i >= 0; i--)
+    for (let j = n - 1; j >= 0; j--)
+      dp[i * W + j] = a[i] === b[j] ? dp[(i + 1) * W + j + 1] + 1
+        : Math.max(dp[(i + 1) * W + j], dp[i * W + j + 1]);
+  let i = 0, j = 0;
+  while (i < m && j < n) {
+    if (a[i] === b[j]) { i++; j++; }
+    else if (dp[(i + 1) * W + j] >= dp[i * W + j + 1]) { out.add(Math.min(s + j + 1, B.length)); i++; }
+    else { out.add(s + j + 1); j++; }
+  }
+  while (j < n) { out.add(s + j + 1); j++; }
+  if (i < m) out.add(Math.min(s + j + 1, B.length));
+  return out;
+}
+
+function markChanged() {
+  docEl.querySelectorAll('.chg').forEach(el => el.classList.remove('chg'));
+  const hits = [];
+  if (changedSet && changedSet.size) {
+    docEl.querySelectorAll('[data-line]').forEach(el => {
+      const a = +el.dataset.line, b = +(el.dataset.endline || el.dataset.line);
+      for (let l = a; l <= b; l++) {
+        if (changedSet.has(l)) { el.classList.add('chg'); hits.push(el); return; }
+      }
+    });
+  }
+  renderChgBar(hits);
+}
+
+function renderChgBar(hits) {
+  const on = editing && !!CONFIG.save_endpoint && changedSet !== null;
+  chgBar.hidden = !on;
+  if (!on) { chgListEl.classList.add('hidden'); return; }
+  chgCountEl.textContent = hits.length ? (hits.length + ' khối đã sửa') : 'chưa sửa gì';
+  chgListEl.innerHTML = hits.map(el => {
+    let head = '';
+    for (let n = el.previousElementSibling; n; n = n.previousElementSibling) {
+      if (/^H[1-6]$/.test(n.tagName)) { head = n.textContent.trim(); break; }
+    }
+    const kind = el.classList.contains('diagram-frame') ? 'diagram'
+      : (el.querySelector && el.querySelector('table')) || el.tagName === 'TABLE' ? 'bảng'
+      : /^H[1-6]$/.test(el.tagName) ? 'tiêu đề' : 'văn';
+    const txt = (el.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 70);
+    return '<button data-l="' + el.dataset.line + '" data-e="' + (el.dataset.endline || el.dataset.line) + '">' +
+      '<span class="ln">d' + el.dataset.line + '</span>' +
+      '<span class="kind edit">' + kind + '</span>' +
+      escapeHtml(head ? head + ' — ' + txt : txt) + '</button>';
+  }).join('') || '<button disabled style="color:var(--ink-faint)">Chưa có khối nào khác bản gốc.</button>';
+  chgListEl.querySelectorAll('button[data-l]').forEach(b => {
+    b.addEventListener('click', () => {
+      const el = blockAtLine(+b.dataset.l);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      jumpToSource(+b.dataset.l, +b.dataset.e, el);
+    });
+  });
+}
+
+const recomputeDiff = debounce(async () => {
+  if (currentIdx < 0) { changedSet = null; renderChgBar([]); return; }
+  const base = await loadBaseline(currentIdx);
+  const cur = editing ? editArea.value : sourceOf(currentIdx);
+  changedSet = base && typeof base.text === 'string' ? changedLines(base.text, cur) : null;
+  chgBaseEl.textContent = base ? ('· so với ' + (base.source === 'git' ? 'git HEAD' : 'lúc mở server')) : '';
+  markChanged();
+}, 260);
+
+document.getElementById('chgToggleList').addEventListener('click', () => chgListEl.classList.toggle('hidden'));
+document.getElementById('chgToggleMark').addEventListener('click', e => {
+  const hidden = docEl.classList.toggle('hide-chg');
+  e.target.textContent = hidden ? 'Hiện dấu' : 'Ẩn dấu';
+});
+
+/* ------------------------------------------------------- diagram editor
+   A Mermaid fence is the one block a reader cannot check by reading. Open it in
+   its own pane: source on the left, the picture redrawn on the right as you
+   type, and Áp dụng writes the fence back into the Markdown — nothing is
+   generated, nothing is reformatted, only the body between the two fences is
+   replaced. */
+const dgm = document.getElementById('dgm');
+const dgmArea = document.getElementById('dgmArea');
+const dgmStage = document.getElementById('dgmStage');
+const dgmMsg = document.getElementById('dgmMsg');
+const dgmWhere = document.getElementById('dgmWhere');
+let dgmCtx = null;
+
+function fenceBodyRange(text, line, endline) {
+  if (!line || !endline || endline <= line) return null;
+  const lines = text.split('\n');
+  const open = lines[line - 1] || '', close = lines[endline - 1] || '';
+  if (!/^\s*```/.test(open) || !/^\s*```\s*$/.test(close)) return null;
+  const [a] = lineRangeToChars(text, line + 1, line + 1);
+  const [, b] = lineRangeToChars(text, endline - 1, endline - 1);
+  return [a, b, line + 1, endline - 1];
+}
+
+/* Fallback when the mapping is unavailable: the k-th mermaid fence in the file
+   is the k-th mermaid figure on the page. */
+function nthFenceRange(text, k) {
+  const lines = text.split('\n');
+  let seen = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (!/^\s*```\s*mermaid\s*$/.test(lines[i])) continue;
+    let j = i + 1;
+    while (j < lines.length && !/^\s*```\s*$/.test(lines[j])) j++;
+    if (++seen === k) return fenceBodyRange(text, i + 1, j + 1);
+    i = j;
+  }
+  return null;
+}
+
+function openDiagramEditor(fig) {
+  if (currentIdx < 0) return;
+  if (!editing) { setEditing(true); }
+  const text = editArea.value;
+  let range = fenceBodyRange(text, +(fig.dataset.line || 0), +(fig.dataset.endline || 0));
+  if (!range) {
+    const k = [...docEl.querySelectorAll('.diagram-frame[data-mermaid]')].indexOf(fig);
+    range = k >= 0 ? nthFenceRange(text, k) : null;
+  }
+  if (!range) { toast('Không tìm được khối ```mermaid tương ứng trong nguồn.', true); return; }
+  dgmCtx = { range };
+  dgmArea.value = text.slice(range[0], range[1]);
+  dgmWhere.textContent = (MANIFEST[currentIdx].rel_path || '') + ' · dòng ' + range[2] + '–' + range[3];
+  dgm.classList.add('open');
+  dgmArea.focus();
+  dgmArea.setSelectionRange(0, 0);
+  dgmRender();
+}
+
+function closeDiagramEditor() {
+  dgm.classList.remove('open');
+  dgmCtx = null;
+  dgmStage.innerHTML = '';
+  dgmMsg.textContent = '';
+  dgmMsg.className = 'dgm-msg';
+}
+
+const dgmRender = debounce(async () => {
+  if (!dgmCtx) return;
+  const code = dgmArea.value;
+  try {
+    const { svg } = await renderOne(code);
+    if (!dgmCtx) return;
+    dgmStage.innerHTML = svg;
+    dgmMsg.textContent = 'Vẽ được. Ctrl/Cmd+Enter để ghi vào Markdown.';
+    dgmMsg.className = 'dgm-msg ok';
+  } catch (err) {
+    if (!dgmCtx) return;
+    dgmMsg.textContent = (err && err.message ? err.message : String(err)).slice(0, 500);
+    dgmMsg.className = 'dgm-msg bad';
+  }
+}, 220);
+
+function applyDiagram() {
+  if (!dgmCtx || currentIdx < 0) return;
+  const [a, b] = dgmCtx.range;
+  const body = dgmArea.value.replace(/\s+$/, '');
+  editArea.focus();
+  editArea.setSelectionRange(a, b);
+  // execCommand keeps the edit on the undo stack; assigning .value does not,
+  // and a correction you cannot Ctrl+Z is worse than one you cannot make.
+  let ok = false;
+  try { ok = document.execCommand('insertText', false, body); } catch (e) { ok = false; }
+  if (!ok) editArea.value = editArea.value.slice(0, a) + body + editArea.value.slice(b);
+  closeDiagramEditor();
+  setDraft(MANIFEST[currentIdx].slug, editArea.value);
+  markDirtyInRail();
+  renderMarkdownInto(docEl, editArea.value, MANIFEST[currentIdx]);
+  buildToc(collectHeadings(docEl));
+  recomputeDiff();
+  toast('Đã ghi sơ đồ vào Markdown — Ctrl/Cmd+S để lưu ra file.');
+}
+
+const DGM_SNIPPETS = [
+  ['Khối init', "%%{init: {'theme':'base','themeVariables':{'primaryColor':'#f4f6f8','primaryTextColor':'#1f2933','primaryBorderColor':'#9aa5b1','lineColor':'#7b8794','fontFamily':'ui-sans-serif, system-ui, sans-serif','fontSize':'14px'}}}%%"],
+  ['Nút', '    n1[Tên hành động]'],
+  ['Quyết định', '    d1{Điều kiện?}'],
+  ['Cạnh có nhãn', '    d1 -->|3a — điều kiện| n2'],
+  ['Làn', '    subgraph kh[Tên tác nhân]\n        a1[Bước]\n    end'],
+  ['Tác nhân', '    ai([Tên tác nhân])'],
+  ['include / extend', '    uc1 -. include .-> uc2'],
+  ['Trình tự', '    A->>B: thông điệp\n    B-->>A: trả lời'],
+];
+document.getElementById('dgmSnips').innerHTML =
+  DGM_SNIPPETS.map((sn, i) => '<button data-i="' + i + '">' + escapeHtml(sn[0]) + '</button>').join('');
+document.getElementById('dgmSnips').addEventListener('click', e => {
+  const btn = e.target.closest('button'); if (!btn) return;
+  const text = DGM_SNIPPETS[+btn.dataset.i][1] + '\n';
+  dgmArea.focus();
+  let ok = false;
+  try { ok = document.execCommand('insertText', false, text); } catch (err) { ok = false; }
+  if (!ok) {
+    const p0 = dgmArea.selectionStart;
+    dgmArea.value = dgmArea.value.slice(0, p0) + text + dgmArea.value.slice(dgmArea.selectionEnd);
+    dgmArea.setSelectionRange(p0 + text.length, p0 + text.length);
+  }
+  dgmRender();
+});
+
+dgmArea.addEventListener('input', dgmRender);
+document.getElementById('dgmApply').addEventListener('click', applyDiagram);
+document.getElementById('dgmCancel').addEventListener('click', closeDiagramEditor);
+dgm.addEventListener('click', e => { if (e.target === dgm) closeDiagramEditor(); });
+dgm.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { e.stopPropagation(); closeDiagramEditor(); }
+  else if ((e.metaKey || e.ctrlKey) && (e.key === 'Enter' || e.key === 's')) { e.preventDefault(); e.stopPropagation(); applyDiagram(); }
+});
 
 /* ------------------------------------------------------------------ route */
 function route() {

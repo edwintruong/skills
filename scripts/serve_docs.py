@@ -28,6 +28,7 @@ from __future__ import annotations
 import argparse
 import json
 import pathlib
+import subprocess
 import sys
 import threading
 import urllib.parse
@@ -41,6 +42,44 @@ from build_site import collect_docs, render_html  # noqa: E402
 SAVE_PATH = "/__save"
 POLL_PATH = "/__poll"
 SOURCE_PATH = "/__source"
+BASELINE_PATH = "/__baseline"
+
+# What "the version I am correcting" means, best first. git is the honest answer
+# when the document is committed — it survives restarts and says exactly which
+# words the assistant wrote. When it is not (or there is no repo), the content
+# at start-up is the next best fixed point, which is why it is captured once
+# here rather than read lazily: read it later and it already contains the edits
+# it was supposed to be the baseline for.
+_SNAPSHOT: dict[str, str] = {}
+
+
+def _snapshot(docs_root: pathlib.Path) -> None:
+    root = docs_root.resolve()
+    for p in sorted(docs_root.rglob("*.md")):
+        try:
+            _SNAPSHOT[p.resolve().relative_to(root).as_posix()] = p.read_text(encoding="utf-8")
+        except (OSError, ValueError, UnicodeDecodeError):
+            continue
+
+
+def _git_baseline(target: pathlib.Path, docs_root: pathlib.Path) -> str | None:
+    """The committed version of this file, or None when git cannot answer."""
+    try:
+        top = subprocess.run(
+            ["git", "-C", str(docs_root), "rev-parse", "--show-toplevel"],
+            capture_output=True, text=True, timeout=5,
+        )
+        if top.returncode != 0:
+            return None
+        repo = pathlib.Path(top.stdout.strip())
+        rel = target.resolve().relative_to(repo.resolve()).as_posix()
+        show = subprocess.run(
+            ["git", "-C", str(repo), "show", f"HEAD:{rel}"],
+            capture_output=True, text=True, timeout=10,
+        )
+        return show.stdout if show.returncode == 0 else None
+    except (OSError, ValueError, subprocess.SubprocessError):
+        return None
 
 
 class DocsHandler(BaseHTTPRequestHandler):
@@ -102,6 +141,27 @@ class DocsHandler(BaseHTTPRequestHandler):
             self.send_header("Cache-Control", "no-store")
             self.end_headers()
             self.wfile.write(body)
+            return
+        if path == BASELINE_PATH:
+            # The page marks every block that differs from this text, so it is
+            # answering one question: which words here are still the draft's.
+            query = urllib.parse.parse_qs(self.path.partition("?")[2])
+            rel = (query.get("path") or [""])[0]
+            try:
+                target = self._md_target(rel)
+                key = target.resolve().relative_to(self.docs_root.resolve()).as_posix()
+            except Exception as exc:
+                self._json(404, {"ok": False, "error": str(exc)})
+                return
+            text = _git_baseline(target, self.docs_root)
+            source = "git"
+            if text is None:
+                text = _SNAPSHOT.get(key)
+                source = "snapshot"
+            if text is None:
+                self._json(404, {"ok": False, "error": "no baseline for " + key})
+                return
+            self._json(200, {"ok": True, "path": key, "source": source, "text": text})
             return
         if path not in ("/", "/index.html"):
             self.send_error(404, "Only the docs site is served here")
@@ -175,6 +235,8 @@ def main() -> None:
         print(f"Not a directory: {docs_root}", file=sys.stderr)
         sys.exit(1)
 
+    _snapshot(docs_root)
+
     DocsHandler.docs_root = docs_root
     DocsHandler.title = args.title
     DocsHandler.phase_names = pathlib.Path(args.phase_names) if args.phase_names else None
@@ -183,6 +245,7 @@ def main() -> None:
     server = ThreadingHTTPServer((args.host, args.port), DocsHandler)
     print(f"Serving {docs_root} at {url}")
     print("Edits made in the page save straight back to the .md files. Ctrl+C to stop.")
+    print("Click a block in the render to jump to its Markdown; ✎ on a diagram opens the diagram editor.")
     if not args.no_open:
         threading.Timer(0.6, lambda: webbrowser.open(url)).start()
     try:

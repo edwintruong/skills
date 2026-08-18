@@ -122,7 +122,7 @@ References are numbered by lifecycle phase; the numbering **is** the writing ord
 
 | Phase | Documents | Reference |
 |---|---|---|
-| **0 · Standards** | House style, writing principles, diagramming, the requirements interview, how components are derived, how a diagram is checked against the real mechanism, how a management use case is broken into operations all the way down to endpoints, the constraints a single use case must satisfy · the overview page that routes the set | `0.1`–`0.8` |
+| **0 · Standards** | House style, writing principles, diagramming, the requirements interview, how components are derived, how a diagram is checked against the real mechanism, how a management use case is broken into operations all the way down to endpoints, the constraints a single use case must satisfy, how a draft is corrected · the overview page that routes the set | `0.1`–`0.9` |
 | **1 · Khảo sát** | Problem survey / BRD — bài toán và **ranh giới hệ thống** · nhu cầu · quy trình as-is · yêu cầu chức năng · cây chức năng · IPO · ràng buộc · kế hoạch; business rules, glossary | `1.1`, `1.2` |
 | **2 · Đặc tả** | Đặc tả yêu cầu — **ranh giới + tác nhân** · ca sử dụng · biểu đồ tổng quan và phân rã mức 2 · đặc tả từng use case · yêu cầu phi chức năng · feature spec | `2.1`, `2.2` |
 | **3 · Phân tích** | Bốn tài liệu: `3.1` xác định các lớp phân tích (boundary/control/entity) · `3.2` biểu đồ trình tự cho từng use case · `3.3` biểu đồ lớp cho từng use case · `3.4` biểu đồ luồng dữ liệu · (`3.5` state machine là ký pháp, không phải tài liệu) | `3.1`–`3.5` |
@@ -223,6 +223,14 @@ python3 scripts/serve_docs.py docs/ --title "Loan Platform Docs"
 
 Opens `http://127.0.0.1:8777`, rebuilt on every load. **Edit → Save writes the real file on disk** (`Ctrl/Cmd+S`). The editor is a split view: Markdown on the left, the rendered page on the right, **one scroll position shared between them**, and the preview re-renders as you type with tables and Mermaid exactly as the exported site shows them. Diagrams re-parse only when their own fence changes, one at a time, and a fence you are halfway through typing keeps its last good drawing dimmed instead of flashing a parse error between keystrokes — the error box arrives about a second after you stop and it is still broken. It also watches the folder, so a `.md` changed by your editor or by an assistant appears in the open page without a refresh — unless that document has unsaved edits in the browser, in which case it says so and leaves your text alone. Only `.md` files inside the served folder can be read or written, and it binds to localhost — it is a writing tool for one person on one machine, not something to expose to a network.
 
+**Correcting a draft is a different job from writing one**, and three things in that page exist only for it — the method that uses them is `0.9`:
+
+- **Click any block in the rendered page and the editor lands on it.** Paragraph, table row, heading, diagram: the Markdown scrolls to that block and selects it, and moving the caret in the source highlights the matching block in the render. The claim you distrust is somewhere in a 500-line file, and finding it is most of the work of fixing it.
+- **A diagram opens in its own editor.** `✎` on any Mermaid figure gives source on one side, the picture redrawn as you type on the other, the parse error underneath, and insert buttons for the house node, decision, labelled edge, lane, actor and init block. Applying it replaces only the body between the two fences, on the undo stack. A Mermaid fence is the one part of a document nobody can proofread by reading it.
+- **Everything you have changed carries a bar.** The baseline is the version the assistant produced — git HEAD when the file is committed, its content at start-up when it is not — with a counter and a clickable list of changed blocks. Saving does not move the baseline; `git commit` does, which is how one review pass ends and the next begins.
+
+Editing a built `site.html` — through `npx serve`, a static host, or `file://` — has no path back to the `.md`. The page will let you type; nothing you type reaches the file.
+
 **One document, quickly:**
 
 ```bash
@@ -267,6 +275,8 @@ software-docs/
                              what each notation asserts, read-back, ten mechanism smells
     0.7-operations.md        what a "quản lý" use case actually contains: bảng thao tác,
                              13-operation checklist, split test, the seven-stage chain
+    0.9-correcting-drafts.md  the loop for fixing a draft: click-to-source, the
+                             diagram pane, marks against the baseline, 7 sweeps by kind
     0.8-use-case-constraints.md  whether one use case is well-formed: goal level and the
                              coffee-break test, empty verbs, step-sentence rules,
                              precondition vs business rule vs assumption, postcondition as
