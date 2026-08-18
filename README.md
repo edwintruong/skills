@@ -20,27 +20,66 @@ Markdown is the source of truth. HTML is a render target, and the exported page 
 
 ## Install
 
-**Claude Code, as a plugin** — read-only, updates when this repo does:
+Two routes, two philosophies. A **plugin** — Claude Code or Codex — subscribes you to a managed,
+read-only bundle that updates when this repo does. **skills.sh** copies editable files into your
+project, which you then own and can hack on. Pick one: installing both leaves the agent reading
+the same router twice.
+
+<details open>
+<summary><strong>Claude Code — plugin</strong></summary>
 
 ```bash
 claude plugin marketplace add edwintruong/skills
 claude plugin install software-docs@edwintruong
 ```
 
-**Codex, and other Agent Skills-compatible harnesses** — editable local files:
+Or from inside a session, `/plugin marketplace add edwintruong/skills` then
+`/plugin install software-docs@edwintruong`. Update with `claude plugin marketplace update edwintruong`.
+
+</details>
+
+<details>
+<summary><strong>Codex — plugin</strong></summary>
+
+Codex reads the same `.claude-plugin/marketplace.json` to find the plugin, then
+`.codex-plugin/plugin.json` to install it:
+
+```bash
+codex plugin marketplace add edwintruong/skills
+codex plugin add software-docs@edwintruong
+```
+
+The tree lands under `~/.codex/plugins/cache/edwintruong/software-docs/<version>/`, references and
+scripts included. Refresh with `codex plugin marketplace upgrade`.
+
+</details>
+
+<details>
+<summary><strong>Cursor, Copilot, Amp and 70+ others — skills.sh</strong></summary>
 
 ```bash
 npx skills@latest add edwintruong/skills
 ```
 
-**Manual, any harness** — clone straight into the skills folder it reads from:
+Pick the agents to install onto; the CLI writes editable copies into whatever folder each one reads
+(`.claude/skills/`, `.agents/skills/` for Codex, `.cursor/skills/`, …), `-g` for the user-level
+equivalent. Nothing updates behind your back — pull later changes with
+`npx skills update software-docs`.
+
+</details>
+
+<details>
+<summary><strong>Manual, any harness</strong></summary>
+
+Clone straight into the skills folder the harness reads from:
 
 ```bash
 git clone https://github.com/edwintruong/skills .claude/skills/software-docs    # one project
 git clone https://github.com/edwintruong/skills ~/.claude/skills/software-docs  # every project
+git clone https://github.com/edwintruong/skills .agents/skills/software-docs    # Codex, one project
 ```
 
-Pick one — the plugin path and the manual clone put the same skill in two places if combined.
+</details>
 
 Requirements:
 
@@ -115,6 +154,8 @@ The same document means different things depending on which one you are in.
 Mode A has one rule that overrides everything else: **do not write a sentence you have not verified against the source.** Reverse-engineered documents are trusted precisely because nobody checks them, so an invented endpoint is worse than a missing section. It also asks you the one question only a human can answer — *which of the things I found are bugs rather than features* — and that is most of what makes mode A worth doing.
 
 Mode B has no source to read, so **the interview is the reading**. It runs as rounds over a design tree: each round asks the whole *frontier* — the decisions whose prerequisites are already settled — numbered, each with a recommended answer, then writes the answers into the documents before computing the next round. The rounds are not improvised; `0.4` maps each one onto the sections it unblocks, from *bối cảnh* through *cửa một chiều*, and the interview is over when the frontier is empty rather than when the conversation runs out. Facts are the skill's job and decisions are yours: it never asks what it can look up. Anything it chose for you is marked `**ASSUMPTION**` with the name of whoever has to confirm it, so a later reader can tell a decision from a guess.
+
+The loop is what you actually see: **it asks a round, waits, writes those answers into the real `.md` files, tells you which files changed and what it had to assume, then asks the next round.** Nothing is written ahead of the frontier, so a document only ever contains what has been decided — and nothing is asked twice, because the open round and the hanging `Q<n>` live in `.software-docs.json` and survive a `/clear` or a new session weeks later. Starting from nothing but an idea works the same way, with one change at the front: round 1 hands you a one-page restatement of your idea to correct — product in a sentence, user groups, main flows, out of scope, all marked `**ASSUMPTION**` — because correcting a page is far faster than answering an open question. And the screens you already picture in your head are treated as evidence, not decoration: every field you name becomes a row in the data dictionary with your answer as its source, then it asks upward — which entity, who fills it, required or not.
 
 ## What gets written, and in what order
 
@@ -262,8 +303,10 @@ The `file://` build keeps the editor too, degrading in a defined order: the comp
 software-docs/
   SKILL.md                   the skill itself — router, workflow, rules
   .claude-plugin/            plugin.json + marketplace.json — makes this repo
-                             installable with `claude plugin install`
-  .codex-plugin/             plugin.json — same, for Codex
+                             installable with `claude plugin install`, and Codex
+                             reads marketplace.json too
+  .codex-plugin/             plugin.json — what `codex plugin add` installs
+  agents/openai.yaml         Codex skill-picker metadata: display name, short label
   references/                one file per document type: template + failure modes
     0.1-visual-style.md      page skeleton, palette, captions, tables, file naming
     0.2-writing-principles.md  interface vs implementation, completeness, approvals
@@ -299,6 +342,7 @@ software-docs/
 - **Different phase labels** (other than `Khảo sát` / `Đặc tả` / …): copy `assets/phase-names.json`, edit, pass `--phase-names my-phases.json`.
 - **Different look**: `assets/site-template.html` is the one template both the site build and the single-file export use. Keep it single — two templates drifting apart is how a diagram ends up correct in one and broken in the other.
 - **House rules of your own**: add them to the matching `references/*.md` rather than to `SKILL.md`. `SKILL.md` is loaded on every trigger; references are loaded only when relevant.
+- **Cutting a release**: `version` lives in two files — `.claude-plugin/plugin.json` and `.codex-plugin/plugin.json` — and both harnesses use it to decide whether an installed user sees an update. Bump them together, in the same commit; a version that moves in one file only means half your users stay on the old skill without any error to tell them.
 
 ## Troubleshooting
 

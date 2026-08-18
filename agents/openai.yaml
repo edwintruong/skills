@@ -1,0 +1,3 @@
+interface:
+  display_name: "Software Docs"
+  short_description: "Write software docs that work as a contract"
