@@ -1,9 +1,9 @@
 {
-  "name": "software-docs",
-  "version": "1.0.0",
+  "name": "edwintruong",
+  "version": "1.0.1",
   "description": "Write clean, consistent software documentation that acts as a contract between BE, FE, AI and data engineers, while staying readable for stakeholders — covers the whole lifecycle from problem survey to user guide, in both directions (document an existing codebase, or design one that doesn't exist yet).",
   "author": {
-    "name": "DatTruong",
+    "name": "EdwinTruong",
     "email": "truongdat.work@gmail.com"
   },
   "homepage": "https://github.com/edwintruong/skills",

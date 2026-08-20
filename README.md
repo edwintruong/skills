@@ -36,6 +36,8 @@ claude plugin install software-docs@edwintruong
 Or from inside a session, `/plugin marketplace add edwintruong/skills` then
 `/plugin install software-docs@edwintruong`. Update with `claude plugin marketplace update edwintruong`.
 
+Once installed as a Claude Code plugin, invoke the skill with `/edwintruong:software-docs`.
+
 </details>
 
 <details>
@@ -104,7 +106,7 @@ Write a test plan for release 2.1
 Standardise the docs in docs/ — they were written by four people
 ```
 
-You can also invoke it explicitly with `/software-docs`, or point it at a target: *"read `ai/app/agent/` and write the SDD"*.
+You can also invoke it explicitly with `/edwintruong:software-docs` when installed as a Claude Code plugin, or `/software-docs` when installed as a standalone skill. You can point it at a target: *"read `ai/app/agent/` and write the SDD"*.
 
 One request that spans several document types (*"document this new feature"*) produces **several linked files**, not one giant one. One file, one purpose.
 
