@@ -14,7 +14,7 @@ A house style for software documentation: precise enough that two engineers on o
 3. **A section written "per use case", "per operation," or "per screen" means every one of them, each with its own subsection.** Never use a representative sample, merge two because they look alike, or let one consolidated diagram stand in for the set. Before publishing, **count**: subsections must equal rows in the use case table, and operations must equal rows in that use case's operation matrix (rule 11). Write a consolidated overview diagram *after* the per-item diagrams, never instead of them.
 4. **One numbered section of the overall table of contents is one `.md` file, and the filename carries that number.** `2.3` in the contents ⇒ `2.3-use-case-specifications.md`. This is mechanical, not aesthetic: `build_site.py` builds the sidebar **from filenames** (`PHASE_FILENAME_RE`), never from headings. A single file containing four sections therefore appears as **one** sidebar row beside a chapter that appears as four, making equivalent content look unevenly divided. Inside a file, **H2** carries either the file number plus one level (`## 3.2.2`) or an existing ID (`## UC-01 — Place order`) — use one form per document, never both. **H3** is an unnumbered named heading; **H4 does not exist**. **If another tier is needed, split the file instead of deepening the headings** (`2.3-…` → `2.3.1-…`, `2.3.2-…`): the ceiling is H3, not a digit count. The page contents list collects **H2 and H3 only**, so the fixed parts of a repeated block (*Purpose*, *Operation matrix*, …) must be **headings, not bold text**; they are reader destinations. Split a file once it exceeds roughly 40 contents entries rather than demoting headings. **A section that determines the shape of another comes first** — decisions before the diagram they produce, inventory before the picture, derived summaries last. The subsystem axis is decided once in [2.1](references/2.1-actors-and-use-cases.md) and reused with the same names and order in 2.3, 3.1–3.3, 4.3, and 4.5 — as **files**, not as another heading tier. Rules, examples, what happens to the Changelog and Open questions after a split, and the cross-document chain are in [0.1](references/0.1-visual-style.md#section-numbering-and-subsystem-tiers) and [Section order](references/0.1-visual-style.md#section-order).
 
-5. **Never invent** an endpoint, column, rule or number. Unknown becomes `**TBD** — <what is missing> (owner: <who>)`. In mode B you may *propose* — marked `**ASSUMPTION** — <what you assumed> (confirm: <who>)` until a human confirms it. Anything unmarked means someone said it.
+5. **Never invent** an endpoint, column, rule or number. Unknown required content becomes `**TBD** — <what is missing> (owner: <who>)`. In mode B you may *propose* — marked `**ASSUMPTION** — <what you assumed> (confirm: <who>)` until a human confirms it. Anything unmarked means someone said it. Optional document metadata is the exception: omit an unavailable field instead of writing an empty value or `TBD`.
 6. **Finish the set in the same session**: write the `.md`, update the overview page `<docs_folder>/README.md`, then rebuild the HTML site (below). A document not in the site and not on the overview page does not exist for the reader.
 7. **Close the use case list before phase 3.** [2.1](references/2.1-actors-and-use-cases.md) provides six discovery passes and two coverage checks; run all of them and record the closing date. Having all use cases is one thing; ensuring that each one is **at the correct goal level and testable** is another. Run [0.8](references/0.8-use-case-constraints.md) against every block: a step at the wrong level, an unverifiable precondition, or a postcondition written as an action leaves no empty cell, so the defect appears only in [6.1](references/6.1-test-plan.md), when nobody knows what to observe. Everything downstream is written per use case, so one omission here means a missing class table, sequence diagram, screen, and test case.
 8. **Draw the boundary before anything crosses it.** Name the black box being designed in [1.1.1](references/1.1-problem-survey.md#111-problem-and-system-boundary), then derive from it. **Anything this project builds, releases, or supports on call is *inside*:** it is a container in [4.1.1](references/4.1-design.md), never an actor in 2.1.1 or an external entity in 3.4. An actor table containing both an end user and one of your own services merges two boundaries — the most common defect in the entire set because it looks like architectural knowledge. Tests and worked examples: [2.1.1](references/2.1-actors-and-use-cases.md#211-identify-actors).
@@ -39,7 +39,7 @@ A house style for software documentation: precise enough that two engineers on o
 
 ## Setup: round 0
 
-Six things are settled before the first document, by asking — all in one round, numbered, each with your recommended answer. Look up anything discoverable yourself; ask only for decisions. This is round 0 of the engine in [0.4](references/0.4-interview.md): mode A stops here and reads the code, mode B keeps running rounds through phases 1–4.
+Five things are settled before the first document, by asking — all in one round, numbered, each with your recommended answer. Look up anything discoverable yourself; ask only for decisions. This is round 0 of the engine in [0.4](references/0.4-interview.md): mode A stops here and reads the code, mode B keeps running rounds through phases 1–4.
 
 | # | Question | Default |
 |---|---|---|
@@ -48,15 +48,13 @@ Six things are settled before the first document, by asking — all in one round
 | 3 | **Mermaid or draw.io?** | Mermaid |
 | 4 | **Existing codebase or greenfield?** The two modes above | Read the repo and propose |
 | 5 | **One system or several** (admin vs user)? See [System shape](#system-shape) | Ask; rarely inferable |
-| 6 | **Who is the author?** The name on every document and every changelog row | `git config user.name`; propose it and confirm |
-
-They are worth interrupting for because each is expensive to reverse: the wrong folder breaks every link, the wrong language rewrites every sentence, the wrong diagram mode reauthors every diagram, the wrong mode writes fiction, the wrong shape splits the set later, and a missing author name puts *Claude* in the `Author` column of every changelog in the set — a document nobody signed is a document nobody owns. Everything else has a default; decide it without asking.
+They are worth interrupting for because each is expensive to reverse: the wrong folder breaks every link, the wrong language rewrites every sentence, the wrong diagram mode reauthors every diagram, the wrong mode writes fiction, and the wrong shape splits the set later. Everything else has a default; decide it without asking.
 
 All five answers go into `<docs_folder>/.software-docs.json`. **Read that file first**; if it exists, those questions are already answered. In mode B, its `interview` block also records the open round, unresolved `Q<n>` items, and completed sections, so a new session resumes instead of asking again ([0.4](references/0.4-interview.md#resuming-an-interview-in-a-later-session)).
 
 ```json
 { "docs_folder": "docs", "language": "vi", "diagram_mode": "mermaid",
-  "mode": "greenfield", "systems": ["admin", "user"], "author": "Alex Nguyen",
+  "mode": "greenfield", "systems": ["admin", "user"],
   "title": "Loan Platform Docs" }
 ```
 
@@ -96,7 +94,7 @@ Name by suffix, never subfolder: `2.1-actors-and-use-cases-admin.md`, `2.3-use-c
 
 ## Workflow
 
-1. Settle the six setup questions (skip what `.software-docs.json` answers).
+1. Settle the five setup questions (skip what `.software-docs.json` answers).
 2. Identify the document type in the router, then **decide the file split before writing a line**: one numbered section of the contents is one file (rule 4), so a request spanning several types produces several linked files — one file, one purpose. If the shape of a repeated block needs three tiers (subsystem → use case → fixed parts), the split is already decided.
 3. Collect what you know: in mode A, read the code, schema, routes, and migrations; in mode B, run **one** interview round ([0.4](references/0.4-interview.md#how-one-round-works)) — ask the entire frontier as numbered questions with a recommendation for each, wait, write the sections that the round unblocks into the real files, name those files to the user, and only then ask the next round. Never write ahead of the frontier, and never ask ahead of what has been written. When the user has only an idea and a picture of the screens, round 1 begins with a one-page restatement for correction rather than open questions, and every field imagined on a screen is recorded as an entity attribute as soon as it is mentioned ([0.4](references/0.4-interview.md#when-there-is-only-an-idea)).
 4. Read the matching reference, plus `0.1` and `0.2` once per session, plus `0.5` whenever the document produces a list of components, `0.6` and `0.3` if there are diagrams, **`0.8` whenever the document contains use cases** — 2.1, 2.3, 2.5, and any review of one — and **`0.7` whenever the document produces operations or endpoints** — use case specs, sequence diagrams, class specs, the schema, the API contract, the test plan.
@@ -179,7 +177,7 @@ When the user asks for one document in the middle, write that one — and if wha
 
 ## Rules for every document
 
-**Open with the metadata table**, immediately after the H1 (the overview page is the one exception — it carries everyone else's status):
+**Open every document, including the overview page, with a metadata table** immediately after the H1. `Status` and `Last updated` are the only required rows. Add any other row — such as `Owner`, `Author`, `Applies to`, `Audience`, or `Target release` — only when a concrete, relevant value is available. Never emit an optional row with an empty value, placeholder, `Unknown`, or `TBD`.
 
 ```markdown
 # <Document title>
@@ -187,13 +185,18 @@ When the user asks for one document in the middle, write that one — and if wha
 | | |
 |---|---|
 | **Status** | Draft / In review / Approved / Deprecated |
-| **Owner** | <name or team accountable for the content staying true> |
-| **Author** | <who wrote this draft — round 0, question 6> |
 | **Last updated** | YYYY-MM-DD |
+```
+
+Optional rows, when their values are known and useful, follow `Last updated`:
+
+```markdown
+| **Owner** | <name or team accountable for the content staying true> |
+| **Author** | <who wrote this version> |
 | **Applies to** | <service, version, or release> |
 ```
 
-**Author is not Owner.** The Author wrote the document and appears in the `Author` column of the changelog. The Owner remains accountable for its accuracy a year later and is often a team rather than a person. They change on different occasions: a handover changes the Owner while leaving every Author row untouched.
+These are examples, not placeholders to copy. If an optional value is unavailable, omit its entire row. When both are present, **Author is not Owner**: the Author wrote this version, while the Owner remains accountable for its accuracy.
 
 **Then 2–4 jargon-free sentences**: what this is, who it is for, why it exists. Everything technical goes below. That shallow layer is what lets one document serve engineers and stakeholders without watering down the deep layer.
 
@@ -227,7 +230,7 @@ python3 scripts/serve_docs.py <docs_folder> --title "Project Docs"              
 python3 scripts/export_html.py <input.md> [-o out.html]                           # one document, sidebar hidden
 ```
 
-The site build reads each document's `#` H1 for its title and the metadata table for the status pill, so a document written to these templates needs no extra front matter. Files are grouped into the phase sidebar by their numeric prefix (`4.1-…` → phase 4); unnumbered ones are placed by folder (`ops/adr/0001-….md` → phase 5). `README.md` or `index.md` at the folder root becomes the landing page, pinned above the phase groups, and relative `.md` links (with or without `#fragment`) are rewritten to in-page links.
+The site build reads each document's `#` H1 for its title, `Status` for its status pill, and any other metadata rows that are present, so a document written to these templates needs no extra front matter. Files are grouped into the phase sidebar by their numeric prefix (`4.1-…` → phase 4); unnumbered ones are placed by folder (`ops/adr/0001-….md` → phase 5). `README.md` or `index.md` at the folder root becomes the landing page, pinned above the phase groups, and relative `.md` links (with or without `#fragment`) are rewritten to in-page links.
 
 - **Offline**: marked.js and mermaid.js are inlined from `assets/vendor/`, images as data URIs. A 20-document set is roughly 4.5 MB.
 - **A broken Mermaid fence renders as an error box** naming the parse failure — look for one after building. While you are typing in the editor it is softer: the diagram holds its last good drawing, dimmed, and the error box arrives about a second after you stop typing and it is still broken. A published page is always loud immediately.

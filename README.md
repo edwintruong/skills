@@ -206,7 +206,7 @@ That chain is what makes a change traceable: move a business rule and the citati
 
 You will rarely ask for the whole set. Ask for one document and you get that one; if the document it should cite does not exist yet, the skill says so in a line rather than inventing the upstream content.
 
-Every document it writes opens the same way — a metadata table (Status · Owner · Last updated · Applies to), then a 2–4 sentence plain-language summary a non-technical reader can finish. Everything technical goes below that.
+Every document it writes opens the same way — a metadata table with the two required fields, `Status` and `Last updated`, then a 2–4 sentence plain-language summary a non-technical reader can finish. Optional metadata such as `Owner`, `Author`, and `Applies to` is included only when a concrete value is known; missing optional fields are omitted rather than left blank or marked `TBD`. Everything technical goes below that.
 
 The set as a whole opens with one page above the phases: `<docs_folder>/README.md`, the **overview page**. Four blocks — what the project is, a map of every document with a *when to read this* column, a reading path per role, and the conventions (statuses, ID prefixes, language). It is what a repository host shows when someone opens the folder and what the exported site opens on, and it is refreshed in the same session that adds or retires a document — a document missing from the map does not exist as far as the reader is concerned.
 
@@ -256,7 +256,7 @@ Markdown is always the artifact. HTML is generated from it — never hand-writte
 python3 scripts/build_site.py docs/ -o site.html --title "Loan Platform Docs"
 ```
 
-Phase-grouped sidebar on the left, the document in the middle, an on-page table of contents on the right. Status pills, owners and dates are read from each document's metadata table; titles from the first `# H1`. Documents with no phase number are placed by the folder they sit in (`ops/adr/0001-….md` → phase 5, `features/2026-08-15-….md` → phase 2).
+Phase-grouped sidebar on the left, the document in the middle, an on-page table of contents on the right. Status pills and dates, plus optional owners when present, are read from each document's metadata table; titles come from the first `# H1`. Documents with no phase number are placed by the folder they sit in (`ops/adr/0001-….md` → phase 5, `features/2026-08-15-….md` → phase 2).
 
 `README.md` (or `index.md`) at the folder root becomes the **landing page**, reached from an *Overview* link pinned above the phase groups and editable like any other document; without one the front page falls back to a generated grid of phase cards. Relative links between documents — `4.4-api-contract.md`, `ops/runbook-orders.md`, with or without a `#heading` — are rewritten to in-page links, so the routing tables on that page work in the exported file exactly as they do in the repo. A link to a document that is not part of the build is left as written and marked, rather than silently pointing nowhere.
 
