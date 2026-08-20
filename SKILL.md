@@ -12,12 +12,14 @@ A house style for software documentation: precise enough that two engineers on o
 1. **Read the matching reference file before writing.** The router picks it. Never write from the router row alone.
 2. **The reference's section layout is mandatory.** Its numbered sections, headings and order are fixed — do not rename, reorder, merge, drop or add one. Copy its template into the new document and fill it in. A section that does not apply gets one line saying so, never a deletion. This fixed shape is the product.
 3. **A section written "per use case", "per operation" or "per screen" means every one of them, each with its own subsection.** Never a representative sample, never two merged because they look alike, never one consolidated diagram standing in for the set. Before publishing, **count**: subsections must equal rows in the use case table, and operations must equal rows in that use case's bảng thao tác (rule 11). A consolidated overview diagram is written *after* the per-item ones, never instead of them.
-4. **Numbering stops at three, and sections run in dependency order.** Mục là H2 `<tài liệu>.<n>` (`## 3.2.2`); H3 is a named heading with no number (`### UC-U01 — …`), and needing a fourth tier means the phân hệ belongs on H2 with a number of its own. **A section that decides the shape of another comes first** — decisions above the diagram they produce, inventory above the picture, derived summaries last. The phân hệ axis is decided once in [2.1](references/2.1-use-cases.md) and reused with the same names and order in 3.1–3.3, 4.3 and 4.5. Rules, examples and the cross-document chain: [0.1](references/0.1-visual-style.md#section-numbering-and-subsystem-tiers) and [Thứ tự các mục](references/0.1-visual-style.md#thứ-tự-các-mục).
+4. **One numbered section of the overall table of contents is one `.md` file, and the filename is that number.** `2.3` in the contents ⇒ `2.3-dac-ta-use-case.md`. This is mechanical, not aesthetic: `build_site.py` builds the sidebar **from filenames** (`PHASE_FILENAME_RE`), never from headings, so one file holding four sections shows up as **one** sidebar row next to a chapter that shows four — same content, a set that looks unevenly divided. Inside a file: **H2** carries either the file's number plus one level (`## 3.2.2`) or an existing ID (`## UC-01 — Đặt hàng`) — one of the two forms per document, never both; **H3** is an unnumbered named heading; **H4 does not exist**. **Need another tier → split the file, don't deepen the headings** (`2.3-…` → `2.3.1-…`, `2.3.2-…`): the ceiling is H3, not a digit count. The page's contents list collects **h2 and h3 only**, so a repeated block's fixed parts (*Mục đích*, *Bảng thao tác*, …) must be **headings, not bold text** — they are what a reader jumps to — and past **~40 contents entries** you split the file rather than demote headings. **A section that decides the shape of another comes first** — decisions above the diagram they produce, inventory above the picture, derived summaries last. The phân hệ axis is decided once in [2.1](references/2.1-actors-and-use-cases.md) and reused with the same names and order in 2.3, 3.1–3.3, 4.3 and 4.5 — as **files**, not as a heading tier. Rules, examples, what happens to Changelog and Câu hỏi mở when you split, and the cross-document chain: [0.1](references/0.1-visual-style.md#section-numbering-and-subsystem-tiers) and [Thứ tự các mục](references/0.1-visual-style.md#thứ-tự-các-mục).
+
 5. **Never invent** an endpoint, column, rule or number. Unknown becomes `**TBD** — <what is missing> (owner: <who>)`. In mode B you may *propose* — marked `**ASSUMPTION** — <what you assumed> (confirm: <who>)` until a human confirms it. Anything unmarked means someone said it.
 6. **Finish the set in the same session**: write the `.md`, update the overview page `<docs_folder>/README.md`, then rebuild the HTML site (below). A document not in the site and not on the overview page does not exist for the reader.
-7. **Close the use case list before phase 3.** [2.1](references/2.1-use-cases.md) carries six discovery passes and two coverage checks; run all of them and record the closing date. Đủ ca là một chuyện, mỗi ca **đúng mức và kiểm được** là chuyện khác: [0.8](references/0.8-use-case-constraints.md) chạy trên từng khối — một dòng sai mức, một tiền điều kiện không kiểm được hay một hậu điều kiện viết thành hành động không để lại ô trống nào, nên nó chỉ lộ ra ở [6.1](references/6.1-test-plan.md) khi không ai biết phải quan sát cái gì. Everything downstream is written per use case, so one missed here is a missing class table, sequence diagram, screen and test case.
-8. **Draw the boundary before anything crosses it.** Name the box being designed — black-box — in [1.1.1](references/1.1-problem-survey.md#111-mô-tả-yêu-cầu-bài-toán), then derive from it. **Anything this project builds, releases or is on call for is *inside*:** it is a container in [4.1.1](references/4.1-design.md), never an actor in 2.1.1 and never an external entity in 3.4. An actor table holding both an end user and one of your own services has merged two boundaries — the most common defect in the whole set, because it looks like knowledge of the architecture. Test and worked cases: [2.1.1](references/2.1-use-cases.md#211-xác-định-tác-nhân).
-9. **Every component is derived, and carries its evidence.** No actor, use case, class, process, store, state, table, screen, interface or test case is written from memory. Each one is produced by the technique that section names ([0.5](references/0.5-derivation.md)) and each row points at where it came from — an upstream item (`UC-01 b3`, `FR2`), an interview answer (`Q7`), a place in the code (`app/api/orders.py:41`), or a marked `**ASSUMPTION**`. A remembered list and a derived list look identical on the page; the difference is only visible in that column, and the row that is missing is invisible in both. Run the two-way check and **count** before publishing.
+7. **Close the use case list before phase 3.** [2.1](references/2.1-actors-and-use-cases.md) carries six discovery passes and two coverage checks; run all of them and record the closing date. Đủ ca là một chuyện, mỗi ca **đúng mức và kiểm được** là chuyện khác: [0.8](references/0.8-use-case-constraints.md) chạy trên từng khối — một dòng sai mức, một tiền điều kiện không kiểm được hay một hậu điều kiện viết thành hành động không để lại ô trống nào, nên nó chỉ lộ ra ở [6.1](references/6.1-test-plan.md) khi không ai biết phải quan sát cái gì. Everything downstream is written per use case, so one missed here is a missing class table, sequence diagram, screen and test case.
+8. **Draw the boundary before anything crosses it.** Name the box being designed — black-box — in [1.1.1](references/1.1-problem-survey.md#111-mô-tả-yêu-cầu-bài-toán), then derive from it. **Anything this project builds, releases or is on call for is *inside*:** it is a container in [4.1.1](references/4.1-design.md), never an actor in 2.1.1 and never an external entity in 3.4. An actor table holding both an end user and one of your own services has merged two boundaries — the most common defect in the whole set, because it looks like knowledge of the architecture. Test and worked cases: [2.1.1](references/2.1-actors-and-use-cases.md#211-xác-định-tác-nhân).
+9. **Every component is derived, and carries its evidence — but evidence and citation are two different things.** No actor, use case, class, process, store, state, table, screen, interface or test case is written from memory; each is produced by the technique its section names ([0.5](references/0.5-derivation.md)). What goes in the `Nguồn` cell is the half a **reader can look up**: an upstream item (`UC-01 b3`, `FR2`, `BR-CAMP-01`, `1.1.2 N7`), a place in the code (`app/api/orders.py:41`), or a marked `**ASSUMPTION**`. The half only the *writer* can check — which interview answer settled it — lives in the `interview` block of `.software-docs.json`, because a reader holding no transcript cannot verify `Q57` and cannot tell a real citation from a dangling one. **Name a question by its topic, not its code** (*"vòng 3 — hạn giữ chỗ"*), so it still points somewhere after the codes are gone. **A `Q<n>` never becomes the subject of a sentence** — write *"Giữ chỗ hết hạn sau 60 phút (vòng 3 — hạn giữ chỗ)"*, never *"`Q63` chốt hạn giữ chỗ"*: codes confined to the `Nguồn` cell and to parentheses come out in one command, codes used as nouns have to be rewritten by hand. A remembered list and a derived list look identical on the page; the difference is only visible in that column, and the row that is missing is invisible in both. **An empty `Nguồn` cell is a defect**, not a blank — fill it or write `**TBD**`. Run the two-way check and **count** before publishing.
+
 10. **A diagram is a claim about mechanism.** Before drawing an arrow, answer the five questions in [0.6](references/0.6-mechanism.md): who initiates, does the caller wait, what actually crosses, where it becomes permanent, what happens when it fails. Unanswerable means unknown — write `**TBD**` in the caption rather than a plausible arrow, because a picture has nowhere to write *"có lẽ"* and is read as certain. Verify by reading it back: every edge becomes one sentence, every sentence gets its evidence.
 11. **A name that says "quản lý" owes a list.** *"Quản lý sản phẩm"* is a valid use case and an empty one: it does not say how many operations it holds, who does each, what each takes in, or what each returns when it fails — and that gap only becomes visible at [4.4](references/4.4-api-contract.md), as an API contract with one endpoint instead of six. Every use case with ≥ 2 operations carries a **bảng thao tác**, swept with the thirteen-operation checklist in [0.7](references/0.7-operations.md), and each operation is then **derived down the chain**: a numbered flow, a sequence diagram or a labelled `alt`, a method with a full signature and its exceptions, a table it writes, an endpoint, an error code, a test case. Two operations differing in *who calls whom* get separate diagrams; differing in *what crosses the boundary* get separate endpoints. The check is a count, at every one of those seven stages — the same words apply to *"xử lý"*, *"cấu hình"*, *"theo dõi"*.
 
@@ -37,7 +39,7 @@ A house style for software documentation: precise enough that two engineers on o
 
 ## Setup: round 0
 
-Five things are settled before the first document, by asking — all in one round, numbered, each with your recommended answer. Look up anything discoverable yourself; ask only for decisions. This is round 0 of the engine in [0.4](references/0.4-interview.md): mode A stops here and reads the code, mode B keeps running rounds through phases 1–4.
+Six things are settled before the first document, by asking — all in one round, numbered, each with your recommended answer. Look up anything discoverable yourself; ask only for decisions. This is round 0 of the engine in [0.4](references/0.4-interview.md): mode A stops here and reads the code, mode B keeps running rounds through phases 1–4.
 
 | # | Question | Default |
 |---|---|---|
@@ -46,14 +48,16 @@ Five things are settled before the first document, by asking — all in one roun
 | 3 | **Mermaid or draw.io?** | Mermaid |
 | 4 | **Existing codebase or greenfield?** The two modes above | Read the repo and propose |
 | 5 | **One system or several** (admin vs user)? See [System shape](#system-shape) | Ask; rarely inferable |
+| 6 | **Who is the author?** The name on every document and every changelog row | `git config user.name`; propose it and confirm |
 
-They are worth interrupting for because each is expensive to reverse: wrong folder breaks every link, wrong language rewrites every sentence, wrong diagram mode re-authors every diagram, wrong mode writes fiction, wrong shape splits the set later. Everything else has a default — decide it without asking.
+They are worth interrupting for because each is expensive to reverse: wrong folder breaks every link, wrong language rewrites every sentence, wrong diagram mode re-authors every diagram, wrong mode writes fiction, wrong shape splits the set later, and a missing author name puts *Claude* in the `Tác giả` column of every changelog in the set — a document nobody signed is a document nobody owns. Everything else has a default — decide it without asking.
 
 All five land in `<docs_folder>/.software-docs.json`. **Read that file first**; if it exists those questions are answered — and in mode B its `interview` block says which round is open, which `Q<n>` are still hanging and which sections are already written, so a new session resumes instead of re-asking ([0.4](references/0.4-interview.md#nối-lại-buổi-phỏng-vấn-ở-phiên-sau)).
 
 ```json
 { "docs_folder": "docs", "language": "vi", "diagram_mode": "mermaid",
-  "mode": "greenfield", "systems": ["admin", "user"], "title": "Loan Platform Docs" }
+  "mode": "greenfield", "systems": ["admin", "user"], "author": "Nguyễn Văn A",
+  "title": "Loan Platform Docs" }
 ```
 
 Later rounds are content questions and only become answerable after round 1: what the system must never do, which flows are the money paths, what is out of scope, which decisions are one-way doors — and in mode A, which of the things you found are bugs rather than features.
@@ -79,7 +83,8 @@ Many products are two: an admin console and an end-user app on one backend. **Sp
 | Phase | Split? |
 |---|---|
 | 1 Khảo sát | **Shared** — one business problem; the split shows up inside 1.1.2 and 1.1.7 |
-| 2 Use cases, feature spec | **Split** — a use case is defined by its actor. `UC-A<n>` admin, `UC-U<n>` user |
+| 2.1–2.3 Use cases, 2.5 feature spec | **Split** — a use case is defined by its actor. `UC-A<n>` admin, `UC-U<n>` user |
+| 2.4 NFR | **Shared** — one platform, one set of quality bars; the `Áp dụng cho` column says which half a row binds |
 | 3.1–3.3 Analysis | **Split like the use cases** |
 | 3.4 Data flow | **Shared** — one system, one flow, or neither half balances |
 | 4.1 Design | **Split 4.1.3 and 4.1.4, keep 4.1.1 and 4.1.2 whole** — one platform has one C4 and one ERD |
@@ -87,18 +92,23 @@ Many products are two: an admin console and an end-user app on one backend. **Sp
 | 4.3 SDD | Per subsystem, plus one for the seam |
 | 4.4 API contract · 4.5 UI design · 7 User guide | **Split** — different consumers, different readers |
 
-Name by suffix, never subfolder: `2.1-use-cases-admin.md`. **One document owns the seam and is never split** — what admin publishes, when the user side sees it, what happens when it arrives half-written. Record `"systems"` in `.software-docs.json`.
+Name by suffix, never subfolder: `2.1-actors-and-use-cases-admin.md`, `2.3-use-case-specs-user.md`. **One document owns the seam and is never split** — what admin publishes, when the user side sees it, what happens when it arrives half-written. Record `"systems"` in `.software-docs.json`.
 
 ## Workflow
 
-1. Settle the five setup questions (skip what `.software-docs.json` answers).
-2. Identify the document type in the router. A request spanning several types produces several linked files — one file, one purpose.
+1. Settle the six setup questions (skip what `.software-docs.json` answers).
+2. Identify the document type in the router, then **decide the file split before writing a line**: one numbered section of the contents is one file (rule 4), so a request spanning several types produces several linked files — one file, one purpose. If the shape of a repeated block needs three tiers (phân hệ → use case → its fixed parts), the split is already decided for you.
 3. Collect what you know: mode A read the code, schema, routes, migrations; mode B run **one** interview round ([0.4](references/0.4-interview.md#một-vòng-chạy-như-thế-nào)) — ask the whole frontier numbered with a recommendation each, wait, then write the sections that round unblocks into the real files, name those files back, and only then ask the next round. Never write ahead of the frontier, and never ask ahead of what is written. When the user has nothing but an idea and a picture of the screens, round 1 opens with a one-page restatement to correct rather than open questions, and every field they imagine on a screen is recorded as an entity attribute the moment they say it ([0.4](references/0.4-interview.md#khi-chỉ-có-một-ý-tưởng)).
-4. Read the matching reference, plus `0.1` and `0.2` once per session, plus `0.5` whenever the document produces a list of components, `0.6` and `0.3` if there are diagrams, **`0.8` whenever the document contains use cases** — 2.1, 2.2, and any review of one — and **`0.7` whenever the document produces operations or endpoints** — use case specs, sequence diagrams, class specs, the schema, the API contract, the test plan.
+4. Read the matching reference, plus `0.1` and `0.2` once per session, plus `0.5` whenever the document produces a list of components, `0.6` and `0.3` if there are diagrams, **`0.8` whenever the document contains use cases** — 2.1, 2.3, 2.5, and any review of one — and **`0.7` whenever the document produces operations or endpoints** — use case specs, sequence diagrams, class specs, the schema, the API contract, the test plan.
 5. Write the Markdown, following the reference's template section by section — deriving each list by the technique `0.5` names for that section, never from memory.
 6. Run that reference's **self-check table** before declaring it done, plus the list check in `0.5` and the diagram check in `0.6`.
 7. Update `<docs_folder>/README.md` — the row for what you wrote, and the reading path if a new reader now has somewhere to start. Template: [0.1](references/0.1-visual-style.md#the-overview-page).
-8. Rebuild the site: `python3 scripts/build_site.py <docs_folder> -o <docs_folder>/site.html --title "<title>"`. Check the output for `! image not found` and open it if a Mermaid fence changed.
+8. Rebuild the site, then **look at it** — counting headings in Markdown is not the check:
+   ```bash
+   python3 scripts/build_site.py <docs_folder> -o <docs_folder>/site.html --title "<title>"
+   python3 scripts/serve_docs.py <docs_folder> --title "<title>"   # :8777, the rendered page
+   ```
+   The build prints every problem it can see on its own — `! image not found`, **dead `.md` links and `#fragments` that hit no heading**, H4 headings no contents list will show, and pages past the ~40-entry contents budget. Fix all of them before saying the set is done; a dead internal link is never reported by a reader, and a router row you satisfied by folding the content into a neighbour (`4.2` into `4.1.2`) leaves every link to it dangling. Then open the page and check the two things only the render shows: **the sidebar** — does every chapter break into a comparable number of rows, or does one chapter show a single fat file — and **the in-page contents** — are the parts a reader jumps to actually listed. A section written in bold instead of as a heading looks finished in Markdown and is invisible on the page.
 
 ## Router — one row per reference
 
@@ -117,8 +127,11 @@ Phase 0 applies to everything; phases 1–7 run in order. **Bold** names the doc
 | 0 | `0.8-use-case-constraints.md` | **Ràng buộc use case** — sáu họ ràng buộc áp cho **một** khối use case: mức mục tiêu (nghỉ giải lao · một tác nhân một mục tiêu một phiên) · tên (động từ rỗng) · câu trong luồng · tiền điều kiện vs luật vs giả định · hậu điều kiện là trạng thái · **tám chế độ hỏng** · tần suất và ngưỡng kích thước; self-check 18 điểm cho từng ca |
 | 1 | `1.1-problem-survey.md` | **Khảo sát / BRD** — eight mandatory sections: bối cảnh + **ranh giới hệ thống** · người dùng · quy trình as-is · yêu cầu chức năng · cây chức năng · IPO · ràng buộc · kế hoạch |
 | 1 | `1.2-business-rules.md` | **Business rules + glossary** — rule table, boundaries, effective dates |
-| 2 | `2.1-use-cases.md` | **Đặc tả yêu cầu** — 4 sections: **ranh giới + tác nhân** · ca sử dụng (kèm cột `Phân hệ`) · biểu đồ tổng quan + phân rã mức 2 · đặc tả từng use case (mục đích · **bảng thao tác** · luồng · trường dữ liệu · biểu đồ hoạt động) · NFR. The three-question actor test, six discovery passes, two coverage checks. **Chốt trục phân hệ cho cả bộ** |
-| 2 | `2.2-feature-spec.md` | **Feature spec** — one feature end to end, split across teams, acceptance criteria |
+| 2 | `2.1-actors-and-use-cases.md` | **2.1 Tác nhân và ca sử dụng** — **ranh giới + tác nhân** · bảng ca sử dụng (kèm cột `Phân hệ`). The three-question actor test, six discovery passes, two coverage checks. **Chốt trục phân hệ cho cả bộ**, và giữ bảng Câu hỏi mở của cả chương 2 |
+| 2 | `2.2-use-case-diagrams.md` | **2.2 Biểu đồ use case** — 1 sơ đồ tổng quan + 1 sơ đồ phân rã mức 2 mỗi nhóm, mỗi sơ đồ một bảng quan hệ kèm điều kiện |
+| 2 | `2.3-use-case-specs.md` | **2.3 Đặc tả use case** — một mục H2 mỗi ca, bảy phần là H3: thuộc tính · mục đích · **bảng thao tác** · luồng · trường dữ liệu · biểu đồ hoạt động. Quá ~5 ca thì tách theo phân hệ thành `2.3.1-…`, `2.3.2-…` |
+| 2 | `2.4-nfr.md` | **2.4 Yêu cầu phi chức năng** — bảng NFR theo chín đặc tính ISO/IEC 25010, mỗi dòng một ngưỡng và một cách kiểm chứng |
+| 2 | `2.5-feature-spec.md` | **Feature spec** — one feature end to end, split across teams, acceptance criteria. Ngoài chuỗi báo cáo nên dùng heading không số |
 | 3 | `3.1-analysis-classes.md` | **3.1 Xác định các lớp phân tích** — boundary/control/entity, one table per use case. Also carries the phase-3 overview and its three no-exception rules |
 | 3 | `3.2-sequence-diagrams.md` | **3.2 Biểu đồ trình tự cho từng use case** — one diagram per use case **and one per operation that changes who calls whom**, message table with `I<n>`, plus failure, asynchrony, timeouts, model calls |
 | 3 | `3.3-class-diagrams.md` | **3.3 Biểu đồ lớp cho từng use case** — one diagram per use case, attributes on every entity, one operation per `T<n>`, multiplicity, consolidated diagram last |
@@ -157,6 +170,7 @@ The numbering is the writing order — each phase supplies the citations the nex
 - Phase 5 sits outside the sequence — maintained continuously alongside the code.
 - **Mode A inverts it**: 4 and 5 first, then reconstruct 1–3.
 - **Mode B's writing order is the interview order** — [0.4](references/0.4-interview.md) maps each round onto the sections it unblocks, so a document is written when its round closes, not at the end. A round that ends without a changed `.md` on disk did not end.
+- **Phase 2 is four documents plus the feature specs** — 2.1 tác nhân + ca → 2.2 biểu đồ → 2.3 đặc tả → 2.4 NFR — in that order, because each closes what the next needs: the list closes before the diagram is drawable, the diagram settles `<<include>>`/`<<extend>>` before a flow is writable. `2.5` feature specs are point-in-time and sit outside that chain.
 - **Phase 3 needs the use case list closed** (rule 7), and is **four documents** — 3.1 lớp phân tích → 3.2 trình tự → 3.3 biểu đồ lớp → 3.4 luồng dữ liệu — written in that order because each needs the one before it. 3.4 is then a third coverage check run from the data side: a process with no use case, or a store nothing writes, is a use case that got away.
 - **Within phase 4, sections are a dependency chain**: containers decide where data can live, the schema decides what classes hold, classes decide what a screen can ask for.
 - The overview page is created as soon as the set has two documents and is the last file touched every session afterwards.
@@ -173,10 +187,13 @@ When the user asks for one document in the middle, write that one — and if wha
 | | |
 |---|---|
 | **Status** | Draft / In review / Approved / Deprecated |
-| **Owner** | <name or team> |
+| **Owner** | <name or team accountable for the content staying true> |
+| **Author** | <who wrote this draft — round 0, question 6> |
 | **Last updated** | YYYY-MM-DD |
 | **Applies to** | <service, version, or release> |
 ```
+
+**Author is not Owner.** Author is who wrote it and is the name in the `Tác giả` column of the changelog; Owner is who answers for it being right a year later, and is often a team rather than a person. They change on different occasions — a handover changes the Owner and leaves every Author row alone.
 
 **Then 2–4 jargon-free sentences**: what this is, who it is for, why it exists. Everything technical goes below. That shallow layer is what lets one document serve engineers and stakeholders without watering down the deep layer.
 
@@ -192,7 +209,8 @@ When the user asks for one document in the middle, write that one — and if wha
 
 ## Visual restraint
 
-- **Heading depth stops at H3.** Deeper structure is a hierarchical number inside the H3 text (`### 2.2.1 Phân hệ kho`), never an H4 — the site's table of contents collects h2 and h3 only.
+- **Heading depth stops at H3, and depth beyond it is a new file** — never an H4, because the page's contents list collects h2 and h3 only and an H4 is a section nobody can jump to (rule 4).
+- **A repeated block's fixed parts are headings, not bold text.** `**Mục đích**` is emphasis; `### Mục đích` is a place in the document.
 - No emoji, no decorative separators, no ASCII banners. Bold for normative keywords and table labels; italics sparingly.
 - Bullets are one line. A bullet needing a sub-bullet and a sentence wants to be a table row.
 - Code fences always carry a language tag. A fence containing another fence uses four backticks.

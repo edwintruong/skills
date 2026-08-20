@@ -47,9 +47,12 @@ import argparse
 import base64
 import json
 import mimetypes
+import os
 import pathlib
 import re
 import sys
+import urllib.parse
+import unicodedata
 
 ASSETS = pathlib.Path(__file__).resolve().parent.parent / "assets"
 TEMPLATE = ASSETS / "site-template.html"
@@ -207,6 +210,94 @@ def collect_images(text: str, base_dir: pathlib.Path) -> dict[str, str]:
     return images
 
 
+# A relative link out of one document into another: "[x](4.2-data-model.md#erd)".
+# Absolute URLs, mail links and pure images are not this script's business.
+MD_LINK_RE = re.compile(r"\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
+HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*#*$", re.MULTILINE)
+FENCE_RE = re.compile(r"^(?:```|~~~).*?^(?:```|~~~)", re.MULTILINE | re.DOTALL)
+
+# The in-page table of contents collects h2 and h3 only, and past roughly this
+# many entries it stops being navigable and starts being a second document.
+TOC_BUDGET = 40
+
+
+def strip_fences(text: str) -> str:
+    """Drop fenced blocks — a link inside a template block is an example, not a link."""
+    return FENCE_RE.sub("", text)
+
+
+def anchor_key(text: str) -> str:
+    """Normalise a heading or a fragment the way the page's fallback lookup does.
+
+    Diacritics are stripped on both sides, so a hand-written Vietnamese
+    fragment ("#211-xac-dinh-tac-nhan" or "#211-xác-định-tác-nhân") matches the
+    heading it was written for either way.
+    """
+    text = urllib.parse.unquote(text)
+    text = unicodedata.normalize("NFD", text.lower())
+    text = "".join(c for c in text if not unicodedata.combining(c))
+    return re.sub(r"[^a-z0-9]+", "", text.replace("\u0111", "d"))
+
+
+def check_links(docs: list[dict], docs_root: pathlib.Path) -> int:
+    """Report dead .md links, dead #fragments, invisible headings and fat pages.
+
+    A dead link inside an internal documentation set is never reported by a
+    reader — the set is small enough that everyone assumes someone else noticed.
+    So it is reported here, at the one moment the whole set is in memory at once.
+    """
+    by_rel = {d["rel_path"]: d for d in docs}
+    anchors = {}
+    problems = []
+
+    for d in docs:
+        body = strip_fences(d["source"])
+        keys = set()
+        toc = 0
+        for hashes, title in HEADING_RE.findall(body):
+            keys.add(anchor_key(title))
+            level = len(hashes)
+            if level in (2, 3):
+                toc += 1
+            elif level >= 4:
+                problems.append(
+                    f"  ! {d['rel_path']}: H{level} heading is invisible — the page's "
+                    f"contents list collects h2 and h3 only: {title.strip()[:60]}"
+                )
+        anchors[d["rel_path"]] = keys
+        if toc > TOC_BUDGET:
+            problems.append(
+                f"  ! {d['rel_path']}: {toc} entries in the in-page contents "
+                f"(budget ~{TOC_BUDGET}) — split the file rather than demoting headings"
+            )
+
+    for d in docs:
+        here = pathlib.PurePosixPath(d["rel_path"]).parent
+        for target in MD_LINK_RE.findall(strip_fences(d["source"])):
+            if target.startswith(("http://", "https://", "mailto:", "data:", "//")):
+                continue
+            path, _, frag = target.partition("#")
+            if not path:
+                if frag and anchor_key(frag) not in anchors[d["rel_path"]]:
+                    problems.append(f"  ! {d['rel_path']}: no heading for in-page link #{frag}")
+                continue
+            if not path.endswith(".md"):
+                continue
+            rel = os.path.normpath(str(here / urllib.parse.unquote(path))).replace(os.sep, "/")
+            rel = rel[2:] if rel.startswith("./") else rel
+            if rel in by_rel:
+                if frag and anchor_key(frag) not in anchors[rel]:
+                    problems.append(f"  ! {d['rel_path']}: no heading {path}#{frag}")
+            elif not (docs_root / here / urllib.parse.unquote(path)).exists():
+                # A target outside the built set still counts as alive if the
+                # file is on disk — only its fragments cannot be checked here.
+                problems.append(f"  ! {d['rel_path']}: dead link -> {target}")
+
+    for line in sorted(set(problems)):
+        print(line, file=sys.stderr)
+    return len(set(problems))
+
+
 def find_home(docs_root: pathlib.Path) -> pathlib.Path | None:
     """The overview page: the set's landing page, not a sidebar entry.
 
@@ -343,6 +434,8 @@ def build(
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(html, encoding="utf-8")
 
+    problems = check_links(docs, docs_root)
+
     phases = {d["phase"] for d in docs if not d.get("home")}
     has_overview = any(d.get("home") for d in docs)
     size_kb = out_path.stat().st_size / 1024
@@ -350,6 +443,12 @@ def build(
         f"\n{len(docs) - has_overview} documents across {len(phases)} phases "
         f"-> {out_path} ({size_kb:.0f} KB)"
     )
+    if problems:
+        print(
+            f"  ! {problems} link or structure problem(s) above — fix them before "
+            f"calling the set done",
+            file=sys.stderr,
+        )
     if not has_overview:
         print(
             "  ! no README.md/index.md in the folder — the front page falls back to "
